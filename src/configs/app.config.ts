@@ -13,11 +13,11 @@ export type AppConfig = {
 
 const appConfig: AppConfig = {
     apiPrefix: '/api',
-    authenticatedEntryPath: '/home',
+    authenticatedEntryPath: '/servicios', // Cambiado de '/home' a '/servicios'
     unAuthenticatedEntryPath: '/sign-in',
-    locale: 'es',  // Cambiado a español
-    accessTokenPersistStrategy: 'localStorage',  // Cambiado para compatibilidad con Supabase
-    enableMock: false,  // Desactivamos mock para usar Supabase real
+    locale: 'es',
+    accessTokenPersistStrategy: 'localStorage',
+    enableMock: false,
     activeNavTranslation: false,
     supabaseUrl: import.meta.env.VITE_SUPABASE_URL || '',
     supabaseAnonKey: import.meta.env.VITE_SUPABASE_ANON_KEY || '',
