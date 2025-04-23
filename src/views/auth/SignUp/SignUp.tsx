@@ -1,3 +1,4 @@
+// src/views/auth/SignUp/SignUp.tsx
 import Logo from '@/components/template/Logo'
 import Alert from '@/components/ui/Alert'
 import SignUpForm from './components/SignUpForm'
@@ -15,7 +16,6 @@ export const SignUpBase = ({
     disableSubmit,
 }: SignUpProps) => {
     const [message, setMessage] = useTimeOutMessage()
-
     const mode = useThemeStore((state) => state.mode)
 
     return (
@@ -29,9 +29,9 @@ export const SignUpBase = ({
                 />
             </div>
             <div className="mb-8">
-                <h3 className="mb-1">Sign Up</h3>
+                <h3 className="mb-1">Registro de Usuario</h3>
                 <p className="font-semibold heading-text">
-                    And lets get started with your free trial
+                    Complete el proceso de verificación para crear su cuenta
                 </p>
             </div>
             {message && (
@@ -42,13 +42,13 @@ export const SignUpBase = ({
             <SignUpForm disableSubmit={disableSubmit} setMessage={setMessage} />
             <div>
                 <div className="mt-6 text-center">
-                    <span>Already have an account? </span>
+                    <span>¿Ya tiene una cuenta? </span>
                     <ActionLink
                         to={signInUrl}
                         className="heading-text font-bold"
                         themeColor={false}
                     >
-                        Sign in
+                        Iniciar sesión
                     </ActionLink>
                 </div>
             </div>

@@ -24,7 +24,7 @@ const validationSchema: ZodType<ResetPasswordFormSchema> = z
     .object({
         newPassword: z.string({ required_error: 'Please enter your password' }),
         confirmPassword: z.string({
-            required_error: 'Confirm Password Required',
+            required_error: 'Confirm password Required',
         }),
     })
     .refine((data) => data.newPassword === data.confirmPassword, {
@@ -74,7 +74,7 @@ const ResetPasswordForm = (props: ResetPasswordFormProps) => {
             {!resetComplete ? (
                 <Form onSubmit={handleSubmit(onResetPassword)}>
                     <FormItem
-                        label="Password"
+                        label="password"
                         invalid={Boolean(errors.newPassword)}
                         errorMessage={errors.newPassword?.message}
                     >
@@ -91,7 +91,7 @@ const ResetPasswordForm = (props: ResetPasswordFormProps) => {
                         />
                     </FormItem>
                     <FormItem
-                        label="Confirm Password"
+                        label="Confirm password"
                         invalid={Boolean(errors.confirmPassword)}
                         errorMessage={errors.confirmPassword?.message}
                     >
@@ -101,7 +101,7 @@ const ResetPasswordForm = (props: ResetPasswordFormProps) => {
                             render={({ field }) => (
                                 <PasswordInput
                                     autoComplete="off"
-                                    placeholder="Confirm Password"
+                                    placeholder="Confirm password"
                                     {...field}
                                 />
                             )}

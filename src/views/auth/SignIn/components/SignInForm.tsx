@@ -1,3 +1,4 @@
+// src/views/auth/SignIn/components/SignInForm.tsx
 import { useState } from 'react'
 import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
@@ -25,11 +26,12 @@ type SignInFormSchema = {
 
 const validationSchema: ZodType<SignInFormSchema> = z.object({
     email: z
-        .string({ required_error: 'Please enter your email' })
-        .min(1, { message: 'Please enter your email' }),
+        .string({ required_error: 'Por favor ingrese su correo electrónico' })
+        .email({ message: 'Formato de correo electrónico no válido' })
+        .min(1, { message: 'Por favor ingrese su correo electrónico' }),
     password: z
-        .string({ required_error: 'Please enter your password' })
-        .min(1, { message: 'Please enter your password' }),
+        .string({ required_error: 'Por favor ingrese su contraseña' })
+        .min(1, { message: 'Por favor ingrese su contraseña' }),
 })
 
 const SignInForm = (props: SignInFormProps) => {
@@ -42,10 +44,6 @@ const SignInForm = (props: SignInFormProps) => {
         formState: { errors },
         control,
     } = useForm<SignInFormSchema>({
-        defaultValues: {
-            email: 'admin-01@ecme.com',
-            password: '123Qwe',
-        },
         resolver: zodResolver(validationSchema),
     })
 
@@ -57,21 +55,25 @@ const SignInForm = (props: SignInFormProps) => {
         if (!disableSubmit) {
             setSubmitting(true)
 
-            const result = await signIn({ email, password })
+            try {
+                const result = await signIn({ email, password })
 
-            if (result?.status === 'failed') {
-                setMessage?.(result.message)
+                if (result?.status === 'failed') {
+                    setMessage?.(result.message)
+                }
+            } catch (error) {
+                setMessage?.((error as Error).message || 'Error al iniciar sesión')
+            } finally {
+                setSubmitting(false)
             }
         }
-
-        setSubmitting(false)
     }
 
     return (
         <div className={className}>
             <Form onSubmit={handleSubmit(onSignIn)}>
                 <FormItem
-                    label="Email"
+                    label="Correo electrónico"
                     invalid={Boolean(errors.email)}
                     errorMessage={errors.email?.message}
                 >
@@ -81,15 +83,15 @@ const SignInForm = (props: SignInFormProps) => {
                         render={({ field }) => (
                             <Input
                                 type="email"
-                                placeholder="Email"
-                                autoComplete="off"
+                                placeholder="correo@ejemplo.com"
+                                autoComplete="email"
                                 {...field}
                             />
                         )}
                     />
                 </FormItem>
                 <FormItem
-                    label="Password"
+                    label="Contraseña"
                     invalid={Boolean(errors.password)}
                     errorMessage={errors.password?.message}
                     className={classNames(
@@ -100,12 +102,10 @@ const SignInForm = (props: SignInFormProps) => {
                     <Controller
                         name="password"
                         control={control}
-                        rules={{ required: true }}
                         render={({ field }) => (
                             <PasswordInput
-                                type="text"
-                                placeholder="Password"
-                                autoComplete="off"
+                                placeholder="Contraseña"
+                                autoComplete="current-password"
                                 {...field}
                             />
                         )}
@@ -118,7 +118,7 @@ const SignInForm = (props: SignInFormProps) => {
                     variant="solid"
                     type="submit"
                 >
-                    {isSubmitting ? 'Signing in...' : 'Sign In'}
+                    {isSubmitting ? 'Iniciando sesión...' : 'Iniciar sesión'}
                 </Button>
             </Form>
         </div>

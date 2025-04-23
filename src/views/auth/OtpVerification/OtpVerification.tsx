@@ -12,7 +12,7 @@ export const OtpVerificationBase = () => {
         try {
             /** simulate api call with sleep */
             await sleep(500)
-            setOtpResend('We have sent you One Time Password.')
+            setOtpResend('We have sent you One Time password.')
         } catch (errors) {
             setMessage?.(
                 typeof errors === 'string' ? errors : 'Some error occured!',
@@ -25,7 +25,7 @@ export const OtpVerificationBase = () => {
             <div className="mb-8">
                 <h3 className="mb-2">OTP Verification</h3>
                 <p className="font-semibold heading-text">
-                    We have sent you One Time Password to your email.
+                    We have sent you One Time password to your email.
                 </p>
             </div>
             {message && (
