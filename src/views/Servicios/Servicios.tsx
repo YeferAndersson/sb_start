@@ -9,138 +9,144 @@ import Spinner from '@/components/ui/Spinner';
 import Button from '@/components/ui/Button';
 
 interface ServiceCardProps {
-  service: DicServicio;
-  onSelect: (serviceId: number) => void;
+    service: DicServicio;
+    onSelect: (serviceId: number) => void;
 }
 
 const ServiceCard = ({ service, onSelect }: ServiceCardProps) => {
-  return (
-    <Card 
-      className="hover:shadow-lg transition-shadow cursor-pointer"
-      onClick={() => onSelect(service.id)}
-    >
-      <div className="p-4">
-        <h4 className="font-semibold mb-2">{service.nombre}</h4>
-        <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">
-          {service.descripcion}
-        </p>
-        <Button 
-          block 
-          variant="solid" 
-          onClick={(e) => {
-            e.stopPropagation();
-            onSelect(service.id);
-          }}
+    return (
+        <Card
+            className="hover:shadow-lg transition-shadow cursor-pointer"
+            onClick={() => onSelect(service.id)}
         >
-          Acceder
-        </Button>
-      </div>
-    </Card>
-  );
+            <div className="p-4">
+                <h4 className="font-semibold mb-2">{service.nombre}</h4>
+                <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">
+                    {service.descripcion}
+                </p>
+                <Button
+                    block
+                    variant="solid"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onSelect(service.id);
+                    }}
+                >
+                    Acceder
+                </Button>
+            </div>
+        </Card>
+    );
 };
 
 const Servicios = () => {
-  const { user } = useAuth();
-  const navigate = useNavigate();
-  const [services, setServices] = useState<(UsuarioServicio & { servicio: DicServicio })[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+    const { user } = useAuth();
+    const navigate = useNavigate();
+    const [services, setServices] = useState<(UsuarioServicio & { servicio: DicServicio })[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchServices = async () => {
-      try {
-        if (user.id) {
-          const userServices = await getUserAvailableServices(user.id);
-          setServices(userServices);
-        } else {
-          setError('No se pudo identificar al usuario');
+    useEffect(() => {
+        const fetchServices = async () => {
+            try {
+                if (user.id) {
+                    const userServices = await getUserAvailableServices(user.id);
+                    setServices(userServices);
+                } else {
+                    setError('No se pudo identificar al usuario');
+                }
+            } catch (err) {
+                console.error('Error al cargar servicios:', err);
+                setError('Error al cargar los servicios disponibles');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchServices();
+    }, [user]);
+
+    // src/views/Servicios/Servicios.tsx (actualizar la función handleServiceSelect)
+
+    const handleServiceSelect = (serviceId: number) => {
+        // Redirigir según el ID del servicio
+        switch (serviceId) {
+            case 1: // PILAR PREGRADO TESISTA
+                navigate('/servicio/tesista');
+                break;
+            case 2: // PILAR PREGRADO DOCENTE
+                navigate('/servicio/docente');
+                break;
+            case 3: // PILAR PREGRADO COORDINADOR
+                navigate('/servicio/coordinador');
+                break;
+            case 4: // PILAR PREGADO ADMINISTRACIONVRI
+                navigate('/servicio/administracion');
+                break;
+            case 5: // Director de Facultad
+                navigate('/servicio/director-facultad');
+                break;
+            case 6: // Director-Subdirector de Investigacion de Escuela
+                navigate('/servicio/director-escuela');
+                break;
+            default:
+                navigate('/servicios');
+                break;
         }
-      } catch (err) {
-        console.error('Error al cargar servicios:', err);
-        setError('Error al cargar los servicios disponibles');
-      } finally {
-        setLoading(false);
-      }
     };
 
-    fetchServices();
-  }, [user]);
-
-  const handleServiceSelect = (serviceId: number) => {
-    // Aquí implementarás la lógica para redirigir al usuario
-    // Depende de cómo quieras manejar los diferentes servicios
-    console.log(`Servicio seleccionado: ${serviceId}`);
-    
-    // Por ejemplo, podrías redirigir según el ID del servicio
-    switch (serviceId) {
-      case 1: // PILAR PREGRADO TESISTA
-        navigate('/tesista-dashboard');
-        break;
-      case 2: // PILAR PREGRADO DOCENTE
-        navigate('/docente-dashboard');
-        break;
-      case 3: // PILAR PREGRADO COORDINADOR
-        navigate('/coordinador-dashboard');
-        break;
-      // Añadir más casos según sea necesario
-      default:
-        navigate('/home');
-        break;
+    if (loading) {
+        return (
+            <div className="flex justify-center items-center h-full">
+                <Spinner size={40} />
+            </div>
+        );
     }
-  };
 
-  if (loading) {
+    if (error) {
+        return (
+            <div className="text-center">
+                <h3 className="mb-2">Error</h3>
+                <p className="text-gray-600 dark:text-gray-400">{error}</p>
+                <Button className="mt-4" onClick={() => navigate('/home')}>
+                    Volver al inicio
+                </Button>
+            </div>
+        );
+    }
+
+    if (services.length === 0) {
+        return (
+            <div className="text-center">
+                <h3 className="mb-2">Sin servicios disponibles</h3>
+                <p className="text-gray-600 dark:text-gray-400">
+                    No tienes servicios disponibles en este momento.
+                </p>
+                <Button className="mt-4" onClick={() => navigate('/home')}>
+                    Volver al inicio
+                </Button>
+            </div>
+        );
+    }
+
     return (
-      <div className="flex justify-center items-center h-full">
-        <Spinner size={40} />
-      </div>
-    );
-  }
+        <div className="container mx-auto px-4 py-8">
+            <h2 className="text-2xl font-bold mb-6">Servicios Disponibles</h2>
+            <p className="mb-6 text-gray-600 dark:text-gray-400">
+                Selecciona uno de los siguientes servicios para acceder:
+            </p>
 
-  if (error) {
-    return (
-      <div className="text-center">
-        <h3 className="mb-2">Error</h3>
-        <p className="text-gray-600 dark:text-gray-400">{error}</p>
-        <Button className="mt-4" onClick={() => navigate('/home')}>
-          Volver al inicio
-        </Button>
-      </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {services.map((userService) => (
+                    <ServiceCard
+                        key={userService.id}
+                        service={userService.servicio}
+                        onSelect={handleServiceSelect}
+                    />
+                ))}
+            </div>
+        </div>
     );
-  }
-
-  if (services.length === 0) {
-    return (
-      <div className="text-center">
-        <h3 className="mb-2">Sin servicios disponibles</h3>
-        <p className="text-gray-600 dark:text-gray-400">
-          No tienes servicios disponibles en este momento.
-        </p>
-        <Button className="mt-4" onClick={() => navigate('/home')}>
-          Volver al inicio
-        </Button>
-      </div>
-    );
-  }
-
-  return (
-    <div className="container mx-auto px-4 py-8">
-      <h2 className="text-2xl font-bold mb-6">Servicios Disponibles</h2>
-      <p className="mb-6 text-gray-600 dark:text-gray-400">
-        Selecciona uno de los siguientes servicios para acceder:
-      </p>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {services.map((userService) => (
-          <ServiceCard 
-            key={userService.id} 
-            service={userService.servicio} 
-            onSelect={handleServiceSelect} 
-          />
-        ))}
-      </div>
-    </div>
-  );
 };
 
 export default Servicios;
