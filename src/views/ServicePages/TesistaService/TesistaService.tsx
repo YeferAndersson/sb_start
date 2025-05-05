@@ -154,7 +154,7 @@ const TesistaService = () => {
         },
         {
             label: "Estado",
-            value: tramiteActual?.estado?.nombre || "Pendiente",
+            value: tramiteActual?.estado?.estado === 1 ? "Activo" : tramiteActual?.estado?.estado || "Pendiente",
             icon: <FaClipboardCheck />
         },
         {
