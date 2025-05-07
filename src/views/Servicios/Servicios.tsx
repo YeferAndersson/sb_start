@@ -7,6 +7,8 @@ import { DicServicio, UsuarioServicio } from '@/lib/supabase';
 import Card from '@/components/ui/Card';
 import Spinner from '@/components/ui/Spinner';
 import Button from '@/components/ui/Button';
+import Container from '@/components/shared/Container'
+import SectionHeader from '@/components/shared/SectionHeader'
 
 interface ServiceCardProps {
     service: DicServicio;
@@ -105,47 +107,61 @@ const Servicios = () => {
 
     if (error) {
         return (
-            <div className="text-center">
-                <h3 className="mb-2">Error</h3>
-                <p className="text-gray-600 dark:text-gray-400">{error}</p>
-                <Button className="mt-4" onClick={() => navigate('/home')}>
-                    Volver al inicio
-                </Button>
-            </div>
+            <Container>´
+                <SectionHeader
+                    title="Servicios y Plataformas"
+                    subtitle="Selecciona el servicio o plataforma a la que desea acceder"
+                />
+                <div className="text-center">
+                    <h3 className="mb-2">Error</h3>
+                    <p className="text-gray-600 dark:text-gray-400">{error}</p>
+                    <Button className="mt-4" onClick={() => navigate('/home')}>
+                        Volver al inicio
+                    </Button>
+                </div>
+            </Container>
         );
     }
 
     if (services.length === 0) {
         return (
-            <div className="text-center">
-                <h3 className="mb-2">Sin servicios disponibles</h3>
-                <p className="text-gray-600 dark:text-gray-400">
-                    No tienes servicios disponibles en este momento.
-                </p>
-                <Button className="mt-4" onClick={() => navigate('/home')}>
-                    Volver al inicio
-                </Button>
-            </div>
+            <Container>
+                <SectionHeader
+                    title="Servicios y Plataformas"
+                    subtitle="Selecciona el servicio o plataforma a la que desea acceder"
+                />
+                <div className="text-center">
+                    <h3 className="mb-2">Sin servicios disponibles</h3>
+                    <p className="text-gray-600 dark:text-gray-400">
+                        No tienes servicios disponibles en este momento.
+                    </p>
+                    <Button className="mt-4" onClick={() => navigate('/home')}>
+                        Volver al inicio
+                    </Button>
+                </div>
+            </Container>
         );
     }
 
     return (
-        <div className="container mx-auto px-4 py-8">
-            <h2 className="text-2xl font-bold mb-6">Servicios Disponibles</h2>
-            <p className="mb-6 text-gray-600 dark:text-gray-400">
-                Selecciona uno de los siguientes servicios para acceder:
-            </p>
+        <Container>
+            <div className="container mx-auto px-4 py-8">
+                <SectionHeader
+                    title="Servicios y Plataformas"
+                    subtitle="Selecciona el servicio o plataforma a la que desea acceder"
+                />
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {services.map((userService) => (
-                    <ServiceCard
-                        key={userService.id}
-                        service={userService.servicio}
-                        onSelect={handleServiceSelect}
-                    />
-                ))}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {services.map((userService) => (
+                        <ServiceCard
+                            key={userService.id}
+                            service={userService.servicio}
+                            onSelect={handleServiceSelect}
+                        />
+                    ))}
+                </div>
             </div>
-        </div>
+        </Container>
     );
 };
 

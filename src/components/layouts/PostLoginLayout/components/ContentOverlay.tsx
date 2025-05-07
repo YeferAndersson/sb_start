@@ -8,6 +8,7 @@ import classNames from '@/utils/classNames'
 import useScrollTop from '@/utils/hooks/useScrollTop'
 import useResponsive from '@/utils/hooks/useResponsive'
 import { LAYOUT_CONTENT_OVERLAY } from '@/constants/theme.constant'
+import HeaderThemeToggle from '@/components/template/HeaderThemeToggle'
 import type { CommonProps } from '@/@types/common'
 import type { FooterPageContainerType } from '@/components/template/Footer'
 
@@ -111,6 +112,7 @@ const ContentOverlay = ({ children }: CommonProps) => {
                         headerMiddle={<>{larger.lg && <HorizontalNav />}</>}
                         headerEnd={
                             <>
+                                <HeaderThemeToggle />
                                 <UserProfileDropdown hoverable={false} />
                             </>
                         }

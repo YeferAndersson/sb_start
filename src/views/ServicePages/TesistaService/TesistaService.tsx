@@ -26,6 +26,7 @@ import {
     FaRocket, FaClipboard, FaArrowRight
 } from 'react-icons/fa';
 import { Steps, Button, Badge, Tabs, Spinner } from '@/components/ui';
+import TesisProgress from './components/TesisProgress';
 
 const TesistaService = () => {
     const navigate = useNavigate();
@@ -339,28 +340,11 @@ const TesistaService = () => {
         <Container>
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
                 {/* Columna izquierda - Steps Verticales */}
-                <div className="lg:col-span-1">
-                    <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-md border border-gray-200 dark:border-gray-700 p-6 h-full">
-                        <h3 className="font-bold text-lg text-gray-900 dark:text-white mb-6">Progreso de Tesis</h3>
-                        <Steps vertical current={etapaActual - 1}>
-                            <Steps.Item title="Carga de proyecto" />
-                            <Steps.Item title="Revisión de formato" />
-                            <Steps.Item title="Revisión del Director" />
-                            <Steps.Item title="Sorteo de jurados" />
-                            <Steps.Item title="Revisión de jurados" />
-                            <Steps.Item title="Dictamen" />
-                            <Steps.Item title="Proyecto aprobado" />
-                            <Steps.Item title="Habilitación borrador" />
-                            <Steps.Item title="Carga de borrador" />
-                            <Steps.Item title="Revisión de formato" />
-                            <Steps.Item title="Revisión por jurados" />
-                            <Steps.Item title="Dictamen de borrador" />
-                            <Steps.Item title="Sustentación" />
-                            <Steps.Item title="Archivo final" />
-                            <Steps.Item title="Concluido" />
-                        </Steps>
-                    </div>
-                </div>
+                <TesisProgress
+                    etapaActual={etapaActual}
+                    tramiteActual={tramiteActual}
+                    estadosTramite={estadosTramite}
+                />
 
                 {/* Columna derecha - Contenido principal */}
                 <div className="lg:col-span-3">
@@ -534,14 +518,14 @@ const TesistaService = () => {
                                                 <div className="space-y-2">
                                                     {processStages.map((stage) => (
                                                         <ProcessStage
-                                                        key={stage.step}
-                                                        step={stage.step}
-                                                        title={stage.title}
-                                                        description={stage.description}
-                                                        isActive={stage.current}
-                                                        isCompleted={stage.completed}
-                                                        tips={[]} // Puedes definir consejos específicos para cada etapa si lo deseas
-                                                    />
+                                                            key={stage.step}
+                                                            step={stage.step}
+                                                            title={stage.title}
+                                                            description={stage.description}
+                                                            isActive={stage.current}
+                                                            isCompleted={stage.completed}
+                                                            tips={[]} // Puedes definir consejos específicos para cada etapa si lo deseas
+                                                        />
                                                     ))}
                                                 </div>
                                             </div>
