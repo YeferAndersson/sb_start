@@ -4,46 +4,56 @@
 
 @layer base {
 	:root {
+		/* Colores principales - refinados para coincidir con el hero section */
 		--neutral: #ffffff;
-		--primary: #2a85ff;
-		--primary-deep: #0069f6;
-		--primary-mild: #4996ff;
-		--primary-subtle: #2a85ff1a;
-		--error: #ff6a55;
-		--error-subtle: #ff6a551a;
-		--success: #10b981;
-		--success-subtle: #05eb7624;
-		--info: #2a85ff;
-		--info-subtle: #2a85ff1a;
-		--warning: #f59e0b;
-		--warning-subtle: #ffd40045;
-		--gray-50: #fafafa;
-		--gray-100: #f5f5f5;
-		--gray-200: #e5e5e5;
-		--gray-300: #d4d4d4;
-		--gray-400: #a3a3a3;
-		--gray-500: #737373;
-		--gray-600: #525252;
-		--gray-700: #404040;
-		--gray-800: #262626;
-		--gray-900: #171717;
-		--gray-950: #0a0a0a;
+		--primary: #4f46e5;         /* Indigo-600 - más cercano al indigo-900 de tu hero */
+		--primary-deep: #4338ca;    /* Indigo-700 - para mayor profundidad */
+		--primary-mild: #4338ca;    /* Indigo-700 - para mejor contraste */
+		--primary-subtle: #4338ca1a; /* Transparencia suave */
+		
+		/* Colores de estado - ligeramente refinados para armonizar mejor */
+		--error: #ef4444;          /* Red-500 - mantenido */
+		--error-subtle: #ef44441a;  /* Con transparencia */
+		--success: #10b981;        /* Emerald-500 - mantenido */
+		--success-subtle: #10b9811a; /* Con transparencia */
+		--info: #3b82f6;           /* Blue-500 - mantenido */
+		--info-subtle: #3b82f61a;   /* Con transparencia */
+		--warning: #f59e0b;        /* Amber-500 - mantenido */
+		--warning-subtle: #f59e0b1a; /* Con transparencia */
+		
+		/* Escala de grises - ajustada para mejor contraste con índigos */
+		--gray-50: #f8fafc;
+		--gray-100: #f1f5f9;
+		--gray-200: #e2e8f0;
+		--gray-300: #cbd5e1;
+		--gray-400: #94a3b8;
+		--gray-500: #64748b;
+		--gray-600: #475569;
+		--gray-700: #334155;
+		--gray-800: #1e293b;
+		--gray-900: #0f172a;
+		--gray-950: #020617;
 	}
-
+	  
 	.dark {
+		/* Colores principales - optimizados para el modo oscuro */
 		--neutral: #ffffff;
-		--primary: #2a85ff;
-		--primary-deep: #0069f6;
-		--primary-mild: #4996ff;
-		--primary-subtle: #2a85ff1a;
-		--error: #ff6a55;
-		--error-subtle: #ff6a551a; 
-		--success: #10b981;
-		--success-subtle: #05eb7624;
-		--info: #2a85ff;
-		--info-subtle: #2a85ff1a;
-		--warning: #f59e0b;
-		--warning-subtle: #ffd40045;
+		--primary: #6366f1;         /* Indigo-500 - mantenido */
+		--primary-deep: #4f46e5;    /* Indigo-600 - mantenido */
+		--primary-mild: #818cf8;    /* Indigo-400 - mantenido */
+		--primary-subtle: #6366f126; /* Con transparencia */
+		
+		/* Colores de estado - ligeramente más brillantes para modo oscuro */
+		--error: #f87171;          /* Red-400 - mantenido */
+		--error-subtle: #f871711a;  /* Con transparencia */
+		--success: #34d399;        /* Emerald-400 - mantenido */
+		--success-subtle: #34d3991a; /* Con transparencia */
+		--info: #60a5fa;           /* Blue-400 - mantenido */
+		--info-subtle: #60a5fa1a;   /* Con transparencia */
+		--warning: #fbbf24;        /* Amber-400 - mantenido */
+		--warning-subtle: #fbbf241a; /* Con transparencia */
+		
+		/* Escala de grises */
 		--gray-50: #fafafa;
 		--gray-100: #f5f5f5;
 		--gray-200: #e5e5e5;
