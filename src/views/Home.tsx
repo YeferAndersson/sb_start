@@ -34,18 +34,18 @@ const SIICPlatform = () => {
 
     // Imágenes para visualización (en producción se usarían imágenes reales de investigación académica)
     const academicImages = [
-        { src: "https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=500&q=80", width: 270, height: 170, type: "research" },
-        { src: "https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?w=500&q=80", width: 190, height: 250, type: "lab" },
-        { src: "https://images.unsplash.com/photo-1516979187457-637abb4f9353?w=500&q=80", width: 220, height: 280, type: "student" },
-        { src: "https://images.unsplash.com/photo-1507413245164-6160d8298b31?w=500&q=80", width: 210, height: 260, type: "thesis" },
-        { src: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=500&q=80", width: 220, height: 180, type: "collaboration" },
-        { src: "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=500&q=80", width: 250, height: 180, type: "paper" },
-        { src: "https://images.unsplash.com/photo-1606761568499-6d2451b23c66?w=500&q=80", width: 180, height: 230, type: "publication" },
-        { src: "https://images.unsplash.com/photo-1577985051167-0d49eec21977?w=500&q=80", width: 180, height: 220, type: "campus" },
-        { src: "https://images.unsplash.com/photo-1588072432836-e10032774350?w=500&q=80", width: 240, height: 160, type: "data" },
-        { src: "https://images.unsplash.com/photo-1584697964358-3e14ca57658b?w=500&q=80", width: 200, height: 250, type: "research" },
-        { src: "https://images.unsplash.com/photo-1471970471555-19d4b113e9ed?w=500&q=80", width: 230, height: 180, type: "lab" },
-        { src: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?q=80&w=2072&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D", width: 190, height: 240, type: "conference" },
+        { src: "/img/institucional/logo_vri.png", width: 230, height: 230, type: "research" },
+        { src: "/img/institucional/Logo_UNAP.png", width: 200, height: 200, type: "lab" },
+        { src: "/img/institucional/logo_ii.jpeg", width: 220, height: 280, type: "student" },
+        { src: "/img/institucional/pilar_pos.png", width: 210, height: 260, type: "thesis" },
+        { src: "/img/institucional/pilar-tes.png", width: 220, height: 180, type: "collaboration" },
+        { src: "/img/institucional/logo_ii.jpeg", width: 250, height: 180, type: "paper" },
+        { src: "/img/institucional/Logo_UNAP.png", width: 180, height: 180, type: "publication" },
+        { src: "/img/institucional/logo_vri.png", width: 180, height: 220, type: "campus" },
+        { src: "/img/institucional/pilar_pos.png", width: 240, height: 160, type: "data" },
+        { src: "/img/institucional/pilar-tes.png", width: 200, height: 250, type: "research" },
+        { src: "/img/institucional/Logo_UNAP.png", width: 230, height: 230, type: "lab" },
+        { src: "/img/institucional/logo_ii.jpeg", width: 190, height: 240, type: "conference" },
     ];
 
     // Configuración para la distribución de imágenes
@@ -54,15 +54,15 @@ const SIICPlatform = () => {
         { x: 15, y: 20, scale: 1.0, rotation: -4, delay: 0.2, moveToCenter: true, centerDelay: 5 },
         { x: 75, y: 15, scale: 0.85, rotation: 3, delay: 0.5, moveToCenter: false },
         { x: 25, y: 70, scale: 0.9, rotation: -2, delay: 0.3, moveToCenter: false },
-        { x: 80, y: 65, scale: 1.05, rotation: 5, delay: 0.7, moveToCenter: true, centerDelay: 8 },
+        { x: 80, y: 65, scale: 1.05, rotation: 5, delay: 0.7, moveToCenter: true, centerDelay: 6 },
         { x: 10, y: 40, scale: 0.95, rotation: -3, delay: 0.4, moveToCenter: false },
         { x: 60, y: 10, scale: 0.9, rotation: 2, delay: 0.6, moveToCenter: false },
-        { x: 70, y: 80, scale: 1.1, rotation: -5, delay: 0.2, moveToCenter: true, centerDelay: 12 },
+        { x: 70, y: 80, scale: 1.1, rotation: -5, delay: 0.2, moveToCenter: true, centerDelay: 7 },
         { x: 20, y: 85, scale: 0.85, rotation: 4, delay: 0.8, moveToCenter: false },
-        { x: 40, y: 30, scale: 1.0, rotation: -2, delay: 0.5, moveToCenter: true, centerDelay: 15 },
+        { x: 40, y: 30, scale: 1.0, rotation: -2, delay: 0.5, moveToCenter: true, centerDelay: 8 },
         { x: 85, y: 40, scale: 0.9, rotation: 3, delay: 0.3, moveToCenter: false },
         { x: 45, y: 75, scale: 0.95, rotation: -4, delay: 0.6, moveToCenter: false },
-        { x: 55, y: 50, scale: 1.0, rotation: 2, delay: 0.4, moveToCenter: true, centerDelay: 10 },
+        { x: 55, y: 50, scale: 1.0, rotation: 2, delay: 0.4, moveToCenter: true, centerDelay: 9 },
     ];
 
 
