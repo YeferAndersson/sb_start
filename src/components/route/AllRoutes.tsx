@@ -1,5 +1,7 @@
 import ProtectedRoute from './ProtectedRoute'
 import PublicRoute from './PublicRoute'
+import UnrestrictedRoute from './UnrestrictedRoute'
+import { unrestrictedRoutes } from '@/configs/routes.config'
 import AuthorityGuard from './AuthorityGuard'
 import AppRoute from './AppRoute'
 import PageContainer from '@/components/template/PageContainer'
@@ -52,6 +54,21 @@ const AllRoutes = (props: AllRoutesProps) => {
             </Route>
             <Route path="/" element={<PublicRoute />}>
                 {publicRoutes.map((route) => (
+                    <Route
+                        key={route.path}
+                        path={route.path}
+                        element={
+                            <AppRoute
+                                routeKey={route.key}
+                                component={route.component}
+                                {...route.meta}
+                            />
+                        }
+                    />
+                ))}
+            </Route>
+            <Route path="/" element={<UnrestrictedRoute />}>
+                {unrestrictedRoutes.map((route) => (
                     <Route
                         key={route.path}
                         path={route.path}

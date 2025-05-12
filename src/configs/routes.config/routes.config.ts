@@ -51,3 +51,14 @@ export const protectedRoutes: Routes = [
     },
     ...othersRoute,
 ]
+
+// src/configs/routes.config/routes.config.ts
+export const unrestrictedRoutes: Routes = [
+    {
+        key: 'test',
+        path: '/test',
+        component: lazy(() => import('@/views/Test')),
+        authority: [],
+    },
+    // Más rutas sin restricciones...
+]
