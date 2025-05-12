@@ -4,15 +4,20 @@ import authRoute from './authRoute'
 import othersRoute from './othersRoute'
 import type { Routes } from '@/@types/routes'
 
-export const publicRoutes: Routes = [...authRoute]
-
-export const protectedRoutes: Routes = [
+export const publicRoutes: Routes = [
+    // Landing page como ruta principal
     {
         key: 'home',
         path: '/home',
         component: lazy(() => import('@/views/Home')),
         authority: [],
     },
+    // Otras rutas públicas
+    ...authRoute
+]
+
+export const protectedRoutes: Routes = [
+    // Dashboard principal después de iniciar sesión
     {
         key: 'servicios',
         path: '/servicios',
