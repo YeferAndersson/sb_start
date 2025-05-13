@@ -60,5 +60,16 @@ export const unrestrictedRoutes: Routes = [
         component: lazy(() => import('@/views/Test')),
         authority: [],
     },
+    {
+        key: 'support',
+        path: '/support/*',
+        component: lazy(() => import('@/views/support/SupportRouter')),
+        authority: [], // Sin restricciones de autoridad
+        meta: {
+            pageContainerType: 'gutterless',
+            layout: 'topBarClassic',
+            footer: false,
+        }
+    },
     // Más rutas sin restricciones...
 ]

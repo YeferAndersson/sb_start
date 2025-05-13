@@ -443,7 +443,7 @@ const SIICPlatform = () => {
                     {/* Contenido principal del hero */}
                     <motion.main className="flex-grow flex flex-col items-center justify-center px-4 pb-20">
                         <motion.h1
-                            className={`text-5xl sm:text-7xl md:text-8xl font-bold tracking-tight mb-4 text-center ${isDarkMode ? 'text-white' : ''
+                            className={`text-5xl sm:text-7xl md:text-8xl font-bold tracking-tight mb-4 text-center ${isDarkMode ? 'text-white' : 'text-gray-900'
                                 }`}
                             initial={{ opacity: 0, y: 50 }}
                             animate={{ opacity: 1, y: 0 }}
@@ -515,11 +515,12 @@ const SIICPlatform = () => {
                                     ? 'border-gray-700 text-white hover:bg-gray-800 active:bg-gray-700'
                                     : 'border-gray-300 text-gray-700 hover:bg-gray-100 active:bg-gray-200'
                                     }`}
+                                onClick={() => navigate(`/support`)}
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
                                 transition={{ duration: 0.2, ease: "easeOut" }} // Consistent hover animation
                             >
-                                Ver demostración
+                                Necesito Ayuda
                             </motion.button>
                         </motion.div>
                     </motion.main>
