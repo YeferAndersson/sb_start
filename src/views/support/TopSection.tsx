@@ -24,17 +24,12 @@ const TopSection = () => {
 
     return (
         <section className="flex flex-col justify-center h-[300px] bg-gradient-to-tr from-indigo-100 via-violet-100 to-fuchsia-100 dark:from-indigo-800 dark:via-violet-900 dark:to-fuchsia-900">
-            <div className="w-full max-w-[800px]  ml-2">
-                <h4 className="flex items-center gap-4 dark:text-white">
-                    
-                    {/* <span>Inicio</span> */}
-                </h4>
-            </div>
+            
             <Container className="flex flex-col items-center px-4">
                 <div className="mb-6 flex flex-col items-center">
-                    <h2 className="flex items-center gap-4 mb-4 text-center dark:text-white">
+                    <h2 className="flex items-center gap-4 mb-4 text-center dark:text-white pr-12">
                     <button
-                        className="outline-none rounded-full p-2 text-xl bg-white hover:bg-gray-200 hover:text-gray-800 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-200 dark:hover:text-gray-100 shadow-sm transition-colors duration-200"
+                        className=" outline-none rounded-full p-2 text-xl bg-white hover:bg-gray-200 hover:text-gray-800 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-200 dark:hover:text-gray-100 shadow-sm transition-colors duration-200"
                         onClick={() => navigate('/')}
                     >
                         <TbArrowNarrowLeft />
