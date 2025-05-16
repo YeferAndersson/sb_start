@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion, useScroll, useTransform, useSpring, AnimatePresence } from 'motion/react';
 import { useNavigate } from 'react-router-dom';
+import useDarkMode from '@/utils/hooks/useDarkMode'; // Import the hook
 
 const SIICPlatform = () => {
-    // Estado para modo oscuro/claro
-    const [isDarkMode, setIsDarkMode] = useState(false);
+    // Replace local state with the hook - using boolean directly
+    const [isDarkMode, setIsDarkMode] = useDarkMode();
 
     // Estado para controlar el menú en móvil
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -12,7 +13,7 @@ const SIICPlatform = () => {
     // Referencias para elementos DOM
     const containerRef = useRef<HTMLDivElement>(null);
     const scrollRef = useRef(null);
-    const imagesRef = useRef<HTMLDivElement[]>([])
+    const imagesRef = useRef<HTMLDivElement[]>([]);
 
     // Valores de scroll para animaciones
     const { scrollYProgress } = useScroll({
@@ -65,11 +66,7 @@ const SIICPlatform = () => {
         { x: 55, y: 50, scale: 1.0, rotation: 2, delay: 0.4, moveToCenter: true, centerDelay: 9 },
     ];
 
-
-    // Función para cambiar el tema
-    const toggleTheme = () => {
-        setIsDarkMode(!isDarkMode);
-    };
+    // Función para cambiar el tema - updated to use the hook
 
     // Toggle para el menú móvil
     const toggleMobileMenu = () => {
@@ -152,13 +149,11 @@ const SIICPlatform = () => {
         };
     }, [isMobileMenuOpen]);
 
-
     const navigate = useNavigate();
-    
     return (
         <div
             ref={containerRef}
-            className={`min-h-screen transition-colors duration-700 ${isDarkMode ? 'bg-gray-950 text-white' : 'bg-gray-50 text-gray-900'
+            className={`min-h-screen transition-colors duration-700 ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-900'
                 }`}
         >
             <div ref={scrollRef} className="relative">
@@ -245,7 +240,7 @@ const SIICPlatform = () => {
 
                 {/* Overlay semitransparente con gradiente */}
                 <motion.div
-                    className={`fixed inset-0 ${isDarkMode ? 'bg-gradient-to-b from-gray-950 to-gray-900' : 'bg-gradient-to-b from-gray-50 to-gray-100'
+                    className={`fixed inset-0 ${isDarkMode ? 'bg-gradient-to-b from-gray-800 to-gray-900' : 'bg-gradient-to-b from-white to-gray-100'
                         }`}
                     animate={{ opacity: isDarkMode ? 0.85 : 0.7 }}
                     transition={{ duration: 1 }}
@@ -258,15 +253,15 @@ const SIICPlatform = () => {
                 >
                     {/* Barra de navegación */}
                     <motion.header
-                        className="fixed top-0 w-full flex justify-center py-4 md:py-6 z-30"
+                        className="fixed top-0 w-full flex justify-center py-4  md:py-6 z-30"
                         initial={{ y: -20, opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}
                         transition={{ duration: 0.8, delay: 0.2 }}
                     >
                         <motion.div
                             className={`w-11/12 md:w-auto flex items-center justify-between gap-4 px-4 md:px-8 py-3 rounded-full ${isDarkMode
-                                ? 'bg-gray-900/90 backdrop-blur-lg border border-gray-800'
-                                : 'bg-white/90 backdrop-blur-lg border border-gray-100 shadow-sm'
+                                ? 'bg-gray-900 backdrop-blur-lg border border-gray-800'
+                                : 'bg-white backdrop-blur-lg border border-gray-100 shadow-sm'
                                 }`}
                             whileHover={{
                                 y: -2,
@@ -397,7 +392,7 @@ const SIICPlatform = () => {
                                             <motion.a
                                                 key={item}
                                                 href={`#${item.toLowerCase()}`}
-                                                className="nav-link text-xl font-medium"
+                                                className="nav-link text-md font-medium"
                                                 initial={{ x: -20, opacity: 0 }}
                                                 animate={{ x: 0, opacity: 1 }}
                                                 transition={{ duration: 0.3, delay: i * 0.05 }}
@@ -408,12 +403,13 @@ const SIICPlatform = () => {
                                         ))}
                                     </nav>
 
-                                    <div className="flex flex-col gap-4 mt-auto">
+                                    <div className="flex flex-col gap-4 mt-auto pb-12">
                                         <motion.button
                                             className={`w-full py-3 text-center text-base rounded-full border transition-colors ${isDarkMode
                                                 ? 'border-gray-700 text-white hover:bg-gray-800'
                                                 : 'border-gray-200 text-gray-800 hover:bg-gray-100'
                                                 }`}
+                                            onClick={() => navigate(`/sign-in`)}
                                             initial={{ opacity: 0, y: 10 }}
                                             animate={{ opacity: 1, y: 0 }}
                                             transition={{ duration: 0.3, delay: 0.3 }}
@@ -427,6 +423,7 @@ const SIICPlatform = () => {
                                                 ? 'bg-indigo-500 text-white hover:bg-indigo-600'
                                                 : 'bg-indigo-600 text-white hover:bg-indigo-700'
                                                 }`}
+                                            onClick={() => navigate(`/sign-up`)}
                                             initial={{ opacity: 0, y: 10 }}
                                             animate={{ opacity: 1, y: 0 }}
                                             transition={{ duration: 0.3, delay: 0.4 }}
@@ -478,7 +475,7 @@ const SIICPlatform = () => {
                                 Sistema Integral de Investigación Científica
                             </motion.h2>
                             <motion.div
-                                className={`inline-flex items-center px-4 py-2 rounded-full ${isDarkMode ? 'bg-indigo-900/80' : 'bg-indigo-50'
+                                className={`inline-flex items-center px-4 py-2 rounded-full ${isDarkMode ? 'bg-indigo-900' : 'bg-indigo-100'
                                     }`}
                                 initial={{ x: -20, opacity: 0 }}
                                 animate={{ x: 0, opacity: 1 }}
@@ -544,7 +541,7 @@ const SIICPlatform = () => {
                             Explorar funcionalidades
                         </motion.span>
                         <motion.div
-                            className={`h-10 w-10 rounded-full flex items-center justify-center ${isDarkMode ? 'bg-gray-800 hover:bg-gray-700' : 'bg-white hover:bg-gray-50 border border-gray-200'
+                            className={`h-10 w-10 rounded-full flex items-center justify-center ${isDarkMode ? 'bg-gray-800 hover:bg-gray-700' : 'bg-white hover:bg-gray-100 border border-gray-200'
                                 }`}
                             animate={{ y: [0, 5, 0] }}
                             transition={{ duration: 2, repeat: Infinity, repeatType: "reverse", delay: 0.2 }}
@@ -570,36 +567,30 @@ const SIICPlatform = () => {
                     {/* Selector de tema (fixed) - Corregido para permanecer visible siempre */}
 
                 </motion.div>
-                <motion.div
-                    className="fixed bottom-6 left-6 z-20"
-                    initial={{ opacity: 1 }}
-                    animate={{ opacity: 1 }}
-                // Eliminar la transformación basada en scroll para mantenerlo visible
-                >
-                    {/* Mantener siempre el selector completo visible, quitamos la condición */}
+                <motion.div className="fixed bottom-6 left-6 z-20">
                     <motion.div
-                        className={`px-1 py-1 rounded-full border flex items-center ${isDarkMode ? 'border-gray-700 bg-gray-900/70 backdrop-blur-md' : 'border-gray-200 bg-white/70 backdrop-blur-md shadow-sm'
+                        className={`px-1 py-1 rounded-full border flex items-center ${isDarkMode ? 'border-gray-700 bg-gray-900 backdrop-blur-md' : 'border-gray-200 bg-white backdrop-blur-md shadow-sm'
                             }`}
                         whileHover={{ scale: 1.05, boxShadow: '0 4px 15px rgba(0,0,0,0.1)' }}
-                        transition={{ duration: 0.2, ease: "easeOut" }} // Consistencia en animaciones
+                        transition={{ duration: 0.2, ease: "easeOut" }}
                     >
                         <motion.button
-                            onClick={() => setIsDarkMode(true)}
+                            onClick={() => setIsDarkMode('dark')}
                             className={`px-3 py-1.5 text-xs rounded-full transition-colors ${isDarkMode ? 'bg-gray-800 text-white font-medium' : 'text-gray-500 hover:text-gray-700'
                                 }`}
                             whileHover={!isDarkMode ? { backgroundColor: 'rgba(0,0,0,0.05)' } : {}}
                             whileTap={{ scale: 0.95 }}
-                            transition={{ duration: 0.2, ease: "easeOut" }} // Consistencia en animaciones
+                            transition={{ duration: 0.2, ease: "easeOut" }}
                         >
                             Oscuro
                         </motion.button>
                         <motion.button
-                            onClick={() => setIsDarkMode(false)}
+                            onClick={() => setIsDarkMode('light')}
                             className={`px-3 py-1.5 text-xs rounded-full transition-colors ${!isDarkMode ? 'bg-gray-200 text-black font-medium' : 'text-gray-400 hover:text-gray-300'
                                 }`}
                             whileHover={isDarkMode ? { backgroundColor: 'rgba(255,255,255,0.1)' } : {}}
                             whileTap={{ scale: 0.95 }}
-                            transition={{ duration: 0.2, ease: "easeOut" }} // Consistencia en animaciones
+                            transition={{ duration: 0.2, ease: "easeOut" }}
                         >
                             Claro
                         </motion.button>
@@ -608,13 +599,13 @@ const SIICPlatform = () => {
 
 
                 {/* Sección Flujo de Trabajo con corrección para el tema oscuro */}
-                <section id='flow-section' className={`relative z-10 py-20 sm:py-32 ${isDarkMode ? 'bg-gray-950 text-white' : 'bg-gray-50'
+                <section id='flow-section' className={`relative z-10 py-20 sm:py-32 ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-gray-100'
                     }`}>
                     <div className="container mx-auto px-4 sm:px-6 md:px-8">
                         <motion.h2
-                            
+
                             className={`text-3xl sm:text-4xl md:text-5xl font-bold mb-6 text-center ${isDarkMode ? ' text-white ' : ''
-                            }`}
+                                }`}
                             initial={{ opacity: 0, y: 50 }}
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true, margin: "-100px" }}
@@ -710,7 +701,7 @@ const SIICPlatform = () => {
                                         transition: { duration: 0.2, ease: "easeOut" } // Consistencia en animaciones
                                     }}
                                 >
-                                    <div className={`flex-shrink-0 w-14 sm:w-16 h-14 sm:h-16 rounded-full flex items-center justify-center mr-4 sm:mr-6 ${isDarkMode ? 'bg-indigo-900/80 shadow-lg shadow-indigo-900/20' : 'bg-indigo-100 shadow-md shadow-indigo-200/50'
+                                    <div className={`flex-shrink-0 w-14 sm:w-16 h-14 sm:h-16 rounded-full flex items-center justify-center mr-4 sm:mr-6 ${isDarkMode ? 'bg-indigo-900 shadow-lg shadow-indigo-900/20' : 'bg-indigo-100 shadow-md shadow-indigo-200'
                                         }`}>
                                         <div className={isDarkMode ? 'text-indigo-300' : 'text-indigo-600'}>
                                             {step.icon}
@@ -719,7 +710,7 @@ const SIICPlatform = () => {
 
                                     <div className="flex-grow pt-1">
                                         <h3 className={`text-lg sm:text-xl font-bold mb-2 ${isDarkMode ? 'text-white' : ''
-                                        }`}
+                                            }`}
                                         >{step.title}</h3>
                                         <p className={isDarkMode ? 'text-gray-300' : 'text-gray-600'}>
                                             {step.description}
@@ -736,7 +727,7 @@ const SIICPlatform = () => {
 
 
                 {/* Footer con mejor contraste y responsividad */}
-                <footer className={`relative z-10 py-12 sm:py-16 ${isDarkMode ? 'bg-gray-950 border-t border-gray-800 text-white' : 'bg-gray-100 border-t border-gray-200'
+                <footer className={`relative z-10 py-12 sm:py-16 ${isDarkMode ? 'bg-gray-900 border-t border-gray-800 text-white' : 'bg-gray-100 border-t border-gray-200'
                     }`}>
                     <div className="container mx-auto px-4 sm:px-6 md:px-8">
                         <div className="grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-12">
@@ -749,7 +740,7 @@ const SIICPlatform = () => {
                                 transition={{ duration: 0.6 }}
                             >
                                 <div className="flex items-center mb-6">
-                                    <div className={`h-10 w-10 rounded-full flex items-center justify-center mr-3 ${isDarkMode ? 'bg-indigo-600 shadow-lg shadow-indigo-900/30' : 'bg-indigo-600 shadow-md shadow-indigo-500/20'
+                                    <div className={`h-10 w-10 rounded-full flex items-center justify-center mr-3 ${isDarkMode ? 'bg-indigo-600 shadow-lg shadow-indigo-900' : 'bg-indigo-600 shadow-md shadow-indigo-500'
                                         }`}>
                                         <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
