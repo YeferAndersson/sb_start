@@ -14,7 +14,7 @@ export type UserDetails = {
     direccion?: string
     sexo?: string
     telefono?: string
-    fechaNacimiento?: Date
+    fechaNacimiento?: Date | string
     existingUserId?: number
 }
 
@@ -78,3 +78,36 @@ export type OauthSignInCallbackPayload = {
     onSignIn: (tokens: Token, user?: User) => void
     redirect: () => void
 }
+
+// Nuevos tipos para roles específicos
+export type UserRole = 'tesista' | 'docente' | 'coordinador' | 'admin'
+
+export type UserWithRole = User & {
+    roles: UserRole[]
+    userData?: TblUsuario
+}
+
+// Tipos para verificación de permisos
+export type PermissionCheck = {
+    hasRole: (role: UserRole) => boolean
+    canAccessService: (serviceId: number) => boolean
+    isOwner: (resourceUserId: number) => boolean
+}
+
+// Constantes para tipos de documento
+export const TIPOS_DOCUMENTO = {
+    DNI: 'DNI',
+    CE: 'CE',
+    PASSPORT: 'PASSPORT'
+} as const
+
+export type TipoDocumento = keyof typeof TIPOS_DOCUMENTO
+
+// Constantes para sexo/género
+export const SEXOS = {
+    M: 'Masculino',
+    F: 'Femenino',
+    O: 'Otro'
+} as const
+
+export type Sexo = keyof typeof SEXOS
