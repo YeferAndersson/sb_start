@@ -1,6 +1,5 @@
 // src/services/UserService.ts
-import { supabase } from '@/lib/supabase'
-import type { TblUsuario } from '@/lib/supabase'
+import { supabase, TblUsuario, TblUsuarioUpdate } from '@/lib/supabase'
 
 export async function getUserProfile(userId: string) {
     // Primero obtenemos el correo del usuario autenticado
@@ -31,7 +30,7 @@ export async function getUserProfile(userId: string) {
     return data as TblUsuario
 }
 
-export async function updateUserProfile(userId: number, userData: Partial<Omit<TblUsuario, 'id'>>) {
+export async function updateUserProfile(userId: number, userData: TblUsuarioUpdate) {
     const { data, error } = await supabase
         .from('tbl_usuarios')
         .update(userData)
@@ -49,8 +48,9 @@ export async function getAllTiposDocumento() {
     // Obtener tipos de documento únicos desde la tabla de usuarios
     const { data, error } = await supabase
         .from('tbl_usuarios')
-        .select('tipodocidentidad')
+        .select('tipo_doc_identidad')
         .eq('estado', 1)
+        .not('tipo_doc_identidad', 'is', null)
     
     if (error) {
         throw new Error(error.message)
@@ -59,18 +59,52 @@ export async function getAllTiposDocumento() {
     // Extraer valores únicos
     const tiposSet = new Set<string>()
     data.forEach(item => {
-        if (item.tipodocidentidad) {
-            tiposSet.add(item.tipodocidentidad)
+        if (item.tipo_doc_identidad) {
+            tiposSet.add(item.tipo_doc_identidad)
         }
     })
     
-    // Si no hay tipos predefinidos, devolver al menos DNI
+    // Si no hay tipos predefinidos, devolver tipos comunes
     if (tiposSet.size === 0) {
-        tiposSet.add('DNI')
+        return [
+            { value: 'DNI', label: 'DNI' },
+            { value: 'CE', label: 'Carné de Extranjería' },
+            { value: 'PASSPORT', label: 'Pasaporte' }
+        ]
     }
     
     return Array.from(tiposSet).map(tipo => ({
         value: tipo,
         label: tipo
     }))
+}
+
+export async function getUserById(userId: number) {
+    const { data, error } = await supabase
+        .from('tbl_usuarios')
+        .select('*')
+        .eq('id', userId)
+        .eq('estado', 1)
+        .single()
+    
+    if (error) {
+        throw new Error(error.message)
+    }
+    
+    return data as TblUsuario
+}
+
+export async function getUserByUuid(uuid: string) {
+    const { data, error } = await supabase
+        .from('tbl_usuarios')
+        .select('*')
+        .eq('uuid', uuid)
+        .eq('estado', 1)
+        .single()
+    
+    if (error) {
+        throw new Error(error.message)
+    }
+    
+    return data as TblUsuario
 }
