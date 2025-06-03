@@ -11,7 +11,8 @@
     "prettier:fix": "npm run prettier -- --write",
     "lint": "npx eslint",
     "lint:fix": "npm run lint -- --fix",
-    "format": "npm run prettier:fix && npm run lint:fix"
+    "format": "npm run prettier:fix && npm run lint:fix",
+    "update-types": "npx supabase gen types typescript --project-id \"jtiqqcidnrxikgiizlpb\" > src/@types/database.types.ts"
   },
   "dependencies": {
     "@floating-ui/react": "^0.27.2",
@@ -105,6 +106,7 @@
     "postcss": "^8.4.45",
     "postcss-nesting": "^13.0.0",
     "prettier": "^3.3.3",
+    "supabase": "^2.24.3",
     "tailwindcss": "^3.4.10",
     "typescript": "^5.7.2",
     "typescript-eslint": "^8.18.2",
