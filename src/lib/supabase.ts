@@ -1,5 +1,6 @@
 // src/lib/supabase.ts
 import { createClient } from '@supabase/supabase-js'
+import type { Database } from '@/@types/database.types'
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
@@ -8,51 +9,54 @@ if (!supabaseUrl || !supabaseAnonKey) {
     throw new Error('Supabase URL y Anon Key deben estar definidos en las variables de entorno')
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey)
 
-// Tipos para los usuarios de nuestra tabla personalizada
-export interface TblUsuario {
-    id: number
-    nombre: string
-    apellido: string
-    tipodocidentidad: string
-    numdocidentidad: string
-    correo: string
-    CorreoGoogle: string | null
-    pais: string
-    direccion: string
-    sexo: string
-    telefono: string
-    fechanacimiento: Date
-    password: string | null
-    rutafoto: string | null
-    estado: number
-    uuid: string | null
-}
+// Tipos basados en la nueva estructura de la base de datos
+export type TblUsuario = Database['public']['Tables']['tbl_usuarios']['Row']
+export type TblUsuarioInsert = Database['public']['Tables']['tbl_usuarios']['Insert']
+export type TblUsuarioUpdate = Database['public']['Tables']['tbl_usuarios']['Update']
 
-export interface DicServicio {
-    id: number;
-    nombre: string;
-    descripcion: string;
-    estado: number;
-}
+export type DicServicio = Database['public']['Tables']['dic_servicios']['Row']
+export type TblUsuarioServicio = Database['public']['Tables']['tbl_usuarios_servicios']['Row']
 
-export interface UsuarioServicio {
-    id: number;
-    id_usuario: number;
-    id_servicio: number;
-    fecha_asignacion: string;
-    estado: number;
-    servicio?: DicServicio; // Para incluir los datos del servicio
-}
+// Tipos para facultades, carreras y especialidades
+export type DicFacultad = Database['public']['Tables']['dic_facultades']['Row']
+export type DicCarrera = Database['public']['Tables']['dic_carreras']['Row']
+export type DicEspecialidad = Database['public']['Tables']['dic_especialidades']['Row']
+export type DicDenominacion = Database['public']['Tables']['dic_denominaciones']['Row']
+
+// Tipos para tesistas
+export type TblTesista = Database['public']['Tables']['tbl_tesistas']['Row']
+export type TblTesistaInsert = Database['public']['Tables']['tbl_tesistas']['Insert']
+
+// Tipos para trámites
+export type TblTramite = Database['public']['Tables']['tbl_tramites']['Row']
+export type TblTramiteInsert = Database['public']['Tables']['tbl_tramites']['Insert']
+export type TblTramiteUpdate = Database['public']['Tables']['tbl_tramites']['Update']
+
+// Tipos para etapas y modalidades
+export type DicEtapa = Database['public']['Tables']['dic_etapas']['Row']
+export type DicModalidad = Database['public']['Tables']['dic_modalidades']['Row']
+export type DicTipoTrabajo = Database['public']['Tables']['dic_tipo_trabajos']['Row']
+
+// Tipos para líneas de investigación
+export type TblSublineaVri = Database['public']['Tables']['tbl_sublineas_vri']['Row']
+export type DicLineaUniversidad = Database['public']['Tables']['dic_lineas_universidad']['Row']
+export type DicAreaOcde = Database['public']['Tables']['dic_areas_ocde']['Row']
+export type DicSubareaOcde = Database['public']['Tables']['dic_subareas_ocde']['Row']
+export type DicDisciplina = Database['public']['Tables']['dic_disciplinas']['Row']
+
+// Tipos para docentes
+export type TblDocente = Database['public']['Tables']['tbl_docentes']['Row']
+export type TblDocenteInsert = Database['public']['Tables']['tbl_docentes']['Insert']
 
 // Funciones de autenticación personalizadas
 export const findUsersByDocIdentity = async (tipoDoc: string, numDoc: string) => {
     const { data, error } = await supabase
         .from('tbl_usuarios')
         .select('*')
-        .eq('tipodocidentidad', tipoDoc)
-        .eq('numdocidentidad', numDoc)
+        .eq('tipo_doc_identidad', tipoDoc)
+        .eq('num_doc_identidad', numDoc)
         .eq('estado', 1)
 
     if (error) {
@@ -62,37 +66,21 @@ export const findUsersByDocIdentity = async (tipoDoc: string, numDoc: string) =>
     return data as TblUsuario[]
 }
 
-export const createNewUser = async (userData: Omit<TblUsuario, 'id'>) => {
-    const formattedData = {
-        ...userData,
-        password: "SUPABASE_AUTH", // Valor fijo para usuarios autenticados con Supabase
-        fechanacimiento: userData.fechanacimiento instanceof Date
-            ? userData.fechanacimiento.toISOString().split('T')[0]
-            : userData.fechanacimiento
-    };
+export const createNewUser = async (userData: TblUsuarioInsert) => {
+    const { data, error } = await supabase
+        .from('tbl_usuarios')
+        .insert([userData])
+        .select()
 
-    console.log('Datos a insertar en tbl_usuarios:', formattedData);
-
-    try {
-        const { data, error } = await supabase
-            .from('tbl_usuarios')
-            .insert([formattedData])
-            .select();
-
-        if (error) {
-            console.error('Error detallado al insertar usuario:', error);
-            throw error;
-        }
-
-        return data[0] as TblUsuario;
-    } catch (err) {
-        console.error('Error al crear usuario:', err);
-        throw err;
+    if (error) {
+        console.error('Error al insertar usuario:', error)
+        throw error
     }
+
+    return data[0] as TblUsuario
 }
 
-// Función para actualizar usuario existente si es necesario
-export const updateExistingUser = async (id: number, userData: Partial<TblUsuario>) => {
+export const updateExistingUser = async (id: number, userData: TblUsuarioUpdate) => {
     const { data, error } = await supabase
         .from('tbl_usuarios')
         .update(userData)
@@ -106,7 +94,6 @@ export const updateExistingUser = async (id: number, userData: Partial<TblUsuari
     return data[0] as TblUsuario
 }
 
-// Nueva función para obtener un usuario por su UUID de Supabase
 export const getUserByUuid = async (uuid: string) => {
     const { data, error } = await supabase
         .from('tbl_usuarios')
@@ -122,347 +109,337 @@ export const getUserByUuid = async (uuid: string) => {
     return data as TblUsuario
 }
 
-// Funciones para obtener servicios de un usuario
-export const getUserServices = async (userId: number) => {
+export const getUserByEmail = async (email: string) => {
     const { data, error } = await supabase
-        .from('tbl_usuariosservicios')
-        .select(`
-        *,
-        servicio:id_servicio(id, nombre, descripcion)
-      `)
-        .eq('id_usuario', userId)
-        .eq('estado', 1);
+        .from('tbl_usuarios')
+        .select('*')
+        .eq('correo', email)
+        .eq('estado', 1)
+        .single()
 
     if (error) {
-        console.error('Error al obtener servicios del usuario:', error);
-        throw error;
+        console.error('Error al buscar usuario por email:', error)
+        throw error
     }
 
-    return data as (UsuarioServicio & { servicio: DicServicio })[];
-};
-
-
-
-// TESISTAS //
-
-// Interfaces para las tablas de diccionario
-export interface DicFacultad {
-    id: number;
-    nombre: string;
-    abreviatura: string;
-    idarea: number;
-    estado: number;
+    return data as TblUsuario
 }
 
-export interface DicCarrera {
-    id: number;
-    idfacultad: number;
-    nombre: string;
-    tieneespecialidades: number;
-    estado: number;
-    facultad?: DicFacultad; // Para incluir relación
+// Funciones para servicios de usuario
+export const getUserServices = async (userId: number) => {
+    const { data, error } = await supabase
+        .from('tbl_usuarios_servicios')
+        .select(`
+            *,
+            servicio:id_servicio(*)
+        `)
+        .eq('id_usuario', userId)
+        .eq('estado', 1)
+
+    if (error) {
+        console.error('Error al obtener servicios del usuario:', error)
+        throw error
+    }
+
+    return data
 }
 
-export interface DicEspecialidad {
-    id: number;
-    idcarrera: number;
-    nombre: string;
-    denominacion: string | null;
-    estado: number;
-    fecha_reg: string;
-    iddenominacion: number | null;
-    carrera?: DicCarrera; // Para incluir relación
-}
-
-export interface Tesista {
-    id: number;
-    idusuario: number;
-    codigoestudiante: string;
-    idfacultad: number;
-    idcarrera: number;
-    idespecialidad: number | null;
-    estado: number;
-    usuario?: TblUsuario; // Para incluir relación
-    facultad?: DicFacultad; // Para incluir relación
-    carrera?: DicCarrera; // Para incluir relación
-    especialidad?: DicEspecialidad; // Para incluir relación opcional
-}
-
-// Funciones para acceder a los datos
+// FACULTADES, CARRERAS Y ESPECIALIDADES
 export const getFacultades = async () => {
     const { data, error } = await supabase
         .from('dic_facultades')
         .select('*')
-        .eq('estado', 1)
-        .order('nombre');
+        .eq('estado_facultad', 1)
+        .order('nombre')
 
-    if (error) throw error;
-    return data as DicFacultad[];
-};
+    if (error) throw error
+    return data as DicFacultad[]
+}
 
 export const getCarreras = async (facultadId?: number) => {
     let query = supabase
         .from('dic_carreras')
-        .select('*, facultad:idfacultad(*)')
-        .eq('estado', 1);
+        .select(`
+            *,
+            facultad:id_facultad(*)
+        `)
+        .eq('estado_carrera', 1)
 
     if (facultadId) {
-        query = query.eq('idfacultad', facultadId);
+        query = query.eq('id_facultad', facultadId)
     }
 
-    const { data, error } = await query.order('nombre');
-    if (error) throw error;
-    return data as (DicCarrera & { facultad: DicFacultad })[];
-};
+    const { data, error } = await query.order('nombre')
+    if (error) throw error
+    return data
+}
 
 export const getEspecialidades = async (carreraId: number) => {
     const { data, error } = await supabase
         .from('dic_especialidades')
-        .select('*, carrera:idcarrera(*)')
-        .eq('idcarrera', carreraId)
-        .eq('estado', 1)
-        .order('nombre');
+        .select(`
+            *,
+            carrera:id_carrera(*)
+        `)
+        .eq('id_carrera', carreraId)
+        .eq('estado_especialidad', 1)
+        .order('nombre')
 
-    if (error) throw error;
-    return data as (DicEspecialidad & { carrera: DicCarrera })[];
-};
+    if (error) throw error
+    return data
+}
 
+export const getDenominaciones = async (carreraId: number, especialidadId?: number) => {
+    let query = supabase
+        .from('dic_denominaciones')
+        .select(`
+            *,
+            carrera:id_carrera(*),
+            especialidad:id_especialidad(*)
+        `)
+        .eq('id_carrera', carreraId)
+        .eq('estado_denominacion', 1)
+
+    if (especialidadId) {
+        query = query.eq('id_especialidad', especialidadId)
+    }
+
+    const { data, error } = await query.order('nombre')
+    if (error) throw error
+    return data
+}
+
+// TESISTAS
 export const getTesistaByUsuario = async (usuarioId: number) => {
     const { data, error } = await supabase
         .from('tbl_tesistas')
         .select(`
-        *,
-        usuario:idusuario(*),
-        facultad:idfacultad(*),
-        carrera:idcarrera(*),
-        especialidad:idespecialidad(*)
-      `)
-        .eq('idusuario', usuarioId)
-        .eq('estado', 1)
-        .single();
+            *,
+            usuario:id_usuario(*),
+            carrera:id_carrera(*),
+            especialidad:id_especialidad(*)
+        `)
+        .eq('id_usuario', usuarioId)
+        .eq('estado_tesista', 1)
+        .single()
 
-    if (error) throw error;
-    return data as (Tesista & {
-        usuario: TblUsuario,
-        facultad: DicFacultad,
-        carrera: DicCarrera,
-        especialidad: DicEspecialidad | null
-    });
-};
+    if (error) throw error
+    return data
+}
 
 export const checkIsTesista = async (usuarioId: number) => {
     const { data, error } = await supabase
         .from('tbl_tesistas')
         .select('id')
-        .eq('idusuario', usuarioId)
-        .eq('estado', 1);
+        .eq('id_usuario', usuarioId)
+        .eq('estado_tesista', 1)
 
-    if (error) throw error;
-    return data && data.length > 0;
-};
+    if (error) throw error
+    return data && data.length > 0
+}
 
-export const createTesista = async (tesistaData: Omit<Tesista, 'id' | 'estado'>) => {
+export const createTesista = async (tesistaData: TblTesistaInsert) => {
     const { data, error } = await supabase
         .from('tbl_tesistas')
         .insert([{
             ...tesistaData,
-            estado: 1
+            estado_tesista: 1
         }])
-        .select();
+        .select()
 
-    if (error) throw error;
-    return data[0] as Tesista;
-};
-
-
-// TRAMITES //
-
-
-export interface DicEstadoTramite {
-    id: number;
-    nombre: string;
-    descripcion: string | null;
-    estado: number;
+    if (error) throw error
+    return data[0] as TblTesista
 }
 
-export interface DicLineaVRI {
-    id: number;
-    nombre: string;
-    estado: number;
-}
-
-export interface DicModalidad {
-    id: number;
-    descripcion: string;
-    ruta: string | null;
-    estado: number;
-}
-
-export interface Tramite {
-    id: number;
-    idtesista: number;
-    codigo: string;
-    anio: number;
-    idestado: number;
-    idlineavri: number;
-    idmodalidad: number;
-    tienecoasesorexterno: number;
-    idfacultad: number;
-    idcarrera: number;
-    idespecialidad: number | null;
-    tipotrabajo: string;
-    fecharegistro: string;
-    tesista?: Tesista; // Para incluir relación
-    estado?: DicEstadoTramite; // Para incluir relación
-    lineavri?: DicLineaVRI; // Para incluir relación
-    modalidad?: DicModalidad; // Para incluir relación
-    facultad?: DicFacultad; // Para incluir relación
-    carrera?: DicCarrera; // Para incluir relación
-    especialidad?: DicEspecialidad; // Para incluir relación opcional
-}
-
-// Función para generar código de trámite
-export const generarCodigoTramite = async (anio: number) => {
-    // Obtener el último código para ese año
+// TRÁMITES
+export const getEtapas = async () => {
     const { data, error } = await supabase
-        .from('tbl_tramites')
-        .select('codigo')
-        .eq('anio', anio)
-        .order('codigo', { ascending: false })
-        .limit(1);
-
-    if (error) throw error;
-
-    let numeroTramite = 1;
-
-    if (data && data.length > 0) {
-        const ultimoCodigo = data[0].codigo;
-        const partes = ultimoCodigo.split('-');
-        if (partes.length === 2) {
-            const ultimoNumero = parseInt(partes[1]);
-            if (!isNaN(ultimoNumero)) {
-                numeroTramite = ultimoNumero + 1;
-            }
-        }
-    }
-
-    // Formatear el número con ceros a la izquierda (ej: 001, 010, 100)
-    const numeroFormateado = numeroTramite.toString().padStart(3, '0');
-    return `${anio}-${numeroFormateado}`;
-};
-
-// Funciones para trabajar con trámites
-export const getEstadosTramite = async () => {
-    const { data, error } = await supabase
-        .from('dic_estadostramite')
+        .from('dic_etapas')
         .select('*')
-        .eq('estado', 1)
-        .order('id');
+        .order('id')
 
-    if (error) throw error;
-    return data as DicEstadoTramite[];
-};
-
-export const getLineasVRI = async () => {
-    const { data, error } = await supabase
-        .from('dic_lineasvri')
-        .select('*')
-        .eq('estado', 1)
-        .order('nombre');
-
-    if (error) throw error;
-    return data as DicLineaVRI[];
-};
+    if (error) throw error
+    return data as DicEtapa[]
+}
 
 export const getModalidades = async () => {
     const { data, error } = await supabase
         .from('dic_modalidades')
         .select('*')
-        .eq('estado', 1);
+        .eq('estado_modalidad', 1)
 
-    if (error) throw error;
-    return data as DicModalidad[];
-};
+    if (error) throw error
+    return data as DicModalidad[]
+}
 
+export const getTipoTrabajos = async () => {
+    const { data, error } = await supabase
+        .from('dic_tipo_trabajos')
+        .select('*')
+        .eq('estado_tipo_trabajo', 1)
+
+    if (error) throw error
+    return data as DicTipoTrabajo[]
+}
+
+// LÍNEAS DE INVESTIGACIÓN
+export const getLineasUniversidad = async () => {
+    const { data, error } = await supabase
+        .from('dic_lineas_universidad')
+        .select('*')
+        .eq('estado_linea_universidad', 1)
+        .order('nombre')
+
+    if (error) throw error
+    return data as DicLineaUniversidad[]
+}
+
+export const getAreasOcde = async () => {
+    const { data, error } = await supabase
+        .from('dic_areas_ocde')
+        .select('*')
+        .eq('estado_area', 1)
+        .order('nombre')
+
+    if (error) throw error
+    return data as DicAreaOcde[]
+}
+
+export const getSubareasOcde = async (areaId: number) => {
+    const { data, error } = await supabase
+        .from('dic_subareas_ocde')
+        .select('*')
+        .eq('id_area', areaId)
+        .eq('estado_subarea', 1)
+        .order('nombre')
+
+    if (error) throw error
+    return data as DicSubareaOcde[]
+}
+
+export const getDisciplinas = async (subareaId: number) => {
+    const { data, error } = await supabase
+        .from('dic_disciplinas')
+        .select('*')
+        .eq('id_subarea', subareaId)
+        .eq('estado_disciplina', 1)
+        .order('nombre')
+
+    if (error) throw error
+    return data as DicDisciplina[]
+}
+
+export const getSublineasVri = async (carreraId?: number) => {
+    let query = supabase
+        .from('tbl_sublineas_vri')
+        .select(`
+            *,
+            area:id_area(*),
+            carrera:id_carrera(*),
+            subarea:id_subarea(*),
+            disciplina:id_disciplina(*),
+            linea_universidad:id_linea_universidad(*)
+        `)
+        .eq('estado_sublinea_vri', 1)
+
+    if (carreraId) {
+        query = query.eq('id_carrera', carreraId)
+    }
+
+    const { data, error } = await query.order('nombre')
+    if (error) throw error
+    return data
+}
+
+// TRÁMITES - FUNCIONES PRINCIPALES
 export const getTramitesByTesista = async (tesistaId: number) => {
     const { data, error } = await supabase
         .from('tbl_tramites')
         .select(`
-        *,
-        tesista:idtesista(*),
-        estado:idestado(*),
-        lineavri:idlineavri(*),
-        modalidad:idmodalidad(*),
-        facultad:idfacultad(*),
-        carrera:idcarrera(*),
-        especialidad:idespecialidad(*)
-      `)
-        .eq('idtesista', tesistaId)
-        .order('fecharegistro', { ascending: false });
+            *,
+            etapa:id_etapa(*),
+            modalidad:id_modalidad(*),
+            denominacion:id_denominacion(*),
+            tipo_trabajo:id_tipo_trabajo(*),
+            sublinea_vri:id_sublinea_vri(*)
+        `)
+        .eq('estado_tramite', 1)
+        .order('fecha_registro', { ascending: false })
 
-    if (error) throw error;
-    return data as (Tramite & {
-        tesista: Tesista,
-        estado: DicEstadoTramite,
-        lineavri: DicLineaVRI,
-        modalidad: DicModalidad,
-        facultad: DicFacultad,
-        carrera: DicCarrera,
-        especialidad: DicEspecialidad | null
-    })[];
-};
+    if (error) throw error
+    return data
+}
 
 export const getTramiteById = async (tramiteId: number) => {
     const { data, error } = await supabase
         .from('tbl_tramites')
         .select(`
-        *,
-        tesista:idtesista(*),
-        estado:idestado(*),
-        lineavri:idlineavri(*),
-        modalidad:idmodalidad(*),
-        facultad:idfacultad(*),
-        carrera:idcarrera(*),
-        especialidad:idespecialidad(*)
-      `)
+            *,
+            etapa:id_etapa(*),
+            modalidad:id_modalidad(*),
+            denominacion:id_denominacion(*),
+            tipo_trabajo:id_tipo_trabajo(*),
+            sublinea_vri:id_sublinea_vri(*)
+        `)
         .eq('id', tramiteId)
-        .single();
+        .single()
 
-    if (error) throw error;
-    return data as (Tramite & {
-        tesista: Tesista,
-        estado: DicEstadoTramite,
-        lineavri: DicLineaVRI,
-        modalidad: DicModalidad,
-        facultad: DicFacultad,
-        carrera: DicCarrera,
-        especialidad: DicEspecialidad | null
-    });
-};
+    if (error) throw error
+    return data
+}
 
-export const createTramite = async (tramiteData: Omit<Tramite, 'id' | 'codigo' | 'fecharegistro'>) => {
-    // Generar código automáticamente
-    const codigo = await generarCodigoTramite(tramiteData.anio);
-
+export const createTramite = async (tramiteData: TblTramiteInsert) => {
     const { data, error } = await supabase
         .from('tbl_tramites')
         .insert([{
             ...tramiteData,
-            codigo
+            estado_tramite: 1
         }])
-        .select();
+        .select()
 
-    if (error) throw error;
-    return data[0] as Tramite;
-};
+    if (error) throw error
+    return data[0] as TblTramite
+}
 
-export const updateEstadoTramite = async (tramiteId: number, nuevoEstadoId: number) => {
+export const updateTramiteEtapa = async (tramiteId: number, nuevaEtapaId: number) => {
     const { data, error } = await supabase
         .from('tbl_tramites')
-        .update({ idestado: nuevoEstadoId })
+        .update({ id_etapa: nuevaEtapaId })
         .eq('id', tramiteId)
-        .select();
+        .select()
 
-    if (error) throw error;
-    return data[0] as Tramite;
-};
+    if (error) throw error
+    return data[0] as TblTramite
+}
+
+// GENERACIÓN DE CÓDIGOS
+export const generarCodigoProyecto = async () => {
+    const currentYear = new Date().getFullYear()
+    
+    // Obtener el último código para este año
+    const { data, error } = await supabase
+        .from('tbl_tramites')
+        .select('codigo_proyecto')
+        .ilike('codigo_proyecto', `${currentYear}-%`)
+        .order('codigo_proyecto', { ascending: false })
+        .limit(1)
+
+    if (error) throw error
+
+    let numeroSecuencial = 1
+
+    if (data && data.length > 0) {
+        const ultimoCodigo = data[0].codigo_proyecto
+        const partes = ultimoCodigo.split('-')
+        if (partes.length === 2) {
+            const ultimoNumero = parseInt(partes[1])
+            if (!isNaN(ultimoNumero)) {
+                numeroSecuencial = ultimoNumero + 1
+            }
+        }
+    }
+
+    // Formatear con ceros a la izquierda
+    const numeroFormateado = numeroSecuencial.toString().padStart(3, '0')
+    return `${currentYear}-${numeroFormateado}`
+}
