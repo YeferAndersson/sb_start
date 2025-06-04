@@ -123,8 +123,7 @@ const SignUpForm = (props: SignUpFormProps) => {
     const {
         handleSubmit: handleSubmitNew,
         formState: { errors: errorsNew },
-        control: controlNew,
-        setValue: setNewValue
+        control: controlNew
     } = useForm<SignUpNewUserSchema>({
         resolver: zodResolver(newUserSchema),
         defaultValues: {
@@ -145,7 +144,8 @@ const SignUpForm = (props: SignUpFormProps) => {
                 if (result.singleUser && result.user) {
                     // Un solo usuario encontrado
                     setSelectedUser(result.user)
-                    setExistingValue('userName', result.user.nombre)
+                    // 🔧 CORREGIDO: usar nombres en lugar de nombre
+                    setExistingValue('userName', result.user.nombres || '')
                     setExistingValue('email', result.user.correo)
                     setRegistrationState('existing_single')
                 } else if (result.users && result.users.length > 0) {
@@ -156,9 +156,6 @@ const SignUpForm = (props: SignUpFormProps) => {
             } else {
                 // No se encontraron usuarios - registro nuevo
                 setRegistrationState('new_user')
-                // Mantener los valores del documento en el nuevo formulario
-                setNewValue('numDocIdentidad', values.numDocIdentidad)
-                setNewValue('tipoDocIdentidad', values.tipoDocIdentidad)
             }
         } catch (error) {
             setMessage?.((error as Error).message || 'Error al verificar el documento')
@@ -170,7 +167,8 @@ const SignUpForm = (props: SignUpFormProps) => {
     // Seleccionar usuario de la lista (caso múltiples usuarios)
     const handleSelectUser = (user: TblUsuario) => {
         setSelectedUser(user)
-        setExistingValue('userName', user.nombre)
+        // 🔧 CORREGIDO: usar nombres en lugar de nombre
+        setExistingValue('userName', user.nombres || '')
         setExistingValue('email', user.correo)
         setRegistrationState('existing_single')
     }
@@ -306,7 +304,8 @@ const SignUpForm = (props: SignUpFormProps) => {
                                 className="p-3 border rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                                 onClick={() => handleSelectUser(user)}
                             >
-                                <p className="font-medium">{user.nombre} {user.apellido}</p>
+                                {/* 🔧 CORREGIDO: usar nombres/apellidos en lugar de nombre/apellido */}
+                                <p className="font-medium">{user.nombres} {user.apellidos}</p>
                                 <p className="text-sm text-gray-500">{user.correo}</p>
                             </div>
                         ))}
@@ -570,7 +569,7 @@ const SignUpForm = (props: SignUpFormProps) => {
                     
                     <div className="grid grid-cols-2 gap-4">
                         <FormItem
-                            label="sexo"
+                            label="Sexo"
                             invalid={Boolean(errorsNew.sexo)}
                             errorMessage={errorsNew.sexo?.message}
                         >
