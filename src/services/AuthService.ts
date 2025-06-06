@@ -1,4 +1,4 @@
-// src/services/AuthService.ts
+// src/services/AuthService.ts - CORREGIDO v2
 import { 
     supabase, 
     findUsersByDocIdentity, 
@@ -51,20 +51,12 @@ export async function apiSignIn(data: SignInCredential): Promise<SignInResponse>
     }
 }
 
-// src/services/AuthService.ts - Función apiSignUp mejorada
-
-// src/services/AuthService.ts - Solo las partes que necesitan corrección
-
-export async function apiSignUp(data: SignUpCredential): Promise<SignUpResponse> {
-    const { email, password, userName, userDetails } = data
-    
+// FUNCIÓN NUEVA: Verificar si email ya existe (sin registrar en Auth)
+export async function apiCheckEmailExists(email: string): Promise<boolean> {
     try {
-        // 🔍 PASO 1: Verificar si el email ya existe ANTES de intentar registrar
-        console.log('🔍 Verificando si el email ya existe:', email)
-        
         const { data: existingUser, error: checkError } = await supabase
             .from('tbl_usuarios')
-            .select('id, correo, uuid')
+            .select('id, correo, contrasenia')
             .eq('correo', email)
             .eq('estado', 1)
             .maybeSingle()
@@ -74,12 +66,72 @@ export async function apiSignUp(data: SignUpCredential): Promise<SignUpResponse>
             throw new Error('Error al verificar la disponibilidad del correo electrónico')
         }
 
-        if (existingUser) {
-            console.log('⚠️ Email ya registrado en nuestra BD:', existingUser)
-            throw new Error(`El correo electrónico ${email} ya está registrado. Si tienes una cuenta, intenta iniciar sesión o recuperar tu contraseña.`)
+        return !!existingUser
+    } catch (error) {
+        console.error('Error verificando email:', error)
+        throw error
+    }
+}
+
+// FUNCIÓN CORREGIDA: Validar todos los datos antes de registrar en Supabase Auth
+export async function apiValidateSignUpData(data: SignUpCredential): Promise<{ isValid: boolean; error?: string }> {
+    const { email, userDetails } = data
+    
+    try {
+        // 🔧 CORRECCIÓN: NO validar email para usuarios existentes
+        const isExistingUser = !!userDetails?.existingUserId
+        
+        if (!isExistingUser) {
+            // Solo verificar email para usuarios NUEVOS
+            console.log('🔍 Verificando email para usuario NUEVO:', email)
+            const emailExists = await apiCheckEmailExists(email)
+            if (emailExists) {
+                return {
+                    isValid: false,
+                    error: `El correo electrónico ${email} ya está registrado. Si tienes una cuenta, intenta iniciar sesión o recuperar tu contraseña.`
+                }
+            }
+        } else {
+            console.log('⏭️ Saltando verificación de email para usuario EXISTENTE:', email)
         }
 
-        // 🚀 PASO 2: Registrar usuario en Supabase Auth (PASO 3 original, ahora es PASO 2)
+        // 2. Validar datos adicionales
+        if (userDetails?.pais && userDetails.pais.length > 3) {
+            return {
+                isValid: false,
+                error: 'El país debe tener máximo 3 caracteres (ejemplo: PER para Perú)'
+            }
+        }
+
+        return { isValid: true }
+    } catch (error) {
+        return {
+            isValid: false,
+            error: error instanceof Error ? error.message : 'Error de validación'
+        }
+    }
+}
+
+export async function apiSignUp(data: SignUpCredential): Promise<SignUpResponse> {
+    const { email, password, userName, userDetails } = data
+    
+    try {
+        // 🔍 PASO 1: Validar TODOS los datos antes de tocar Supabase Auth
+        console.log('🔍 Validando datos completos antes de registrar...')
+        console.log('📋 Datos recibidos:', {
+            email,
+            userName,
+            isExistingUser: !!userDetails?.existingUserId,
+            existingUserId: userDetails?.existingUserId
+        })
+        
+        const validation = await apiValidateSignUpData(data)
+        if (!validation.isValid) {
+            console.error('❌ Validación falló:', validation.error)
+            throw new Error(validation.error || 'Datos de registro inválidos')
+        }
+
+        // 🚀 PASO 2: Solo AHORA registrar en Supabase Auth
         console.log('📝 Registrando usuario en Supabase Auth...')
         
         const { data: authData, error } = await supabase.auth.signUp({
@@ -96,27 +148,6 @@ export async function apiSignUp(data: SignUpCredential): Promise<SignUpResponse>
 
         if (error) {
             console.error('❌ Error en Supabase Auth:', error)
-            
-            if (error.message.includes('already registered') || error.message.includes('already been registered')) {
-                throw new Error(`El correo electrónico ${email} ya está registrado. Si olvidaste tu contraseña, puedes recuperarla en la página de inicio de sesión.`)
-            }
-            
-            if (error.message.includes('invalid email')) {
-                throw new Error('El formato del correo electrónico no es válido. Por favor, verifica e intenta nuevamente.')
-            }
-            
-            if (error.message.includes('password')) {
-                throw new Error('La contraseña no cumple con los requisitos de seguridad. Debe tener al menos 6 caracteres.')
-            }
-            
-            if (error.message.includes('rate limit') || error.message.includes('too many')) {
-                throw new Error('Demasiados intentos de registro. Por favor, espera unos minutos e intenta nuevamente.')
-            }
-            
-            if (error.message.includes('network') || error.message.includes('fetch')) {
-                throw new Error('Error de conexión. Verifica tu conexión a internet e intenta nuevamente.')
-            }
-            
             throw new Error(`Error en el registro: ${error.message}`)
         }
         
@@ -132,6 +163,7 @@ export async function apiSignUp(data: SignUpCredential): Promise<SignUpResponse>
         
         // 🔄 PASO 3: Manejar usuario existente vs nuevo
         if (userDetails?.existingUserId) {
+            console.log('👤 Procesando usuario EXISTENTE con ID:', userDetails.existingUserId)
             try {
                 const { data: updatedUser, error: updateError } = await supabase
                     .from('tbl_usuarios')
@@ -139,7 +171,6 @@ export async function apiSignUp(data: SignUpCredential): Promise<SignUpResponse>
                         estado: 1,
                         contrasenia: 'SUPABASE_AUTH',
                         uuid: supabaseUuid
-                        // ❌ ELIMINADO: fecha_modificacion
                     })
                     .eq('id', userDetails.existingUserId)
                     .select()
@@ -159,6 +190,7 @@ export async function apiSignUp(data: SignUpCredential): Promise<SignUpResponse>
             } catch (updateError) {
                 console.error('❌ Error al actualizar usuario existente:', updateError)
                 
+                // ROLLBACK: Eliminar de Supabase Auth
                 try {
                     await supabase.auth.admin.deleteUser(supabaseUuid)
                     console.log('🔄 Rollback: Usuario eliminado de Auth debido a error en BD')
@@ -171,7 +203,7 @@ export async function apiSignUp(data: SignUpCredential): Promise<SignUpResponse>
             
         } else {
             // Nuevo usuario
-            console.log('📝 Creando nuevo usuario en tabla personalizada...')
+            console.log('🆕 Procesando usuario NUEVO')
             
             try {
                 const newUserData: TblUsuarioInsert = {
@@ -181,7 +213,7 @@ export async function apiSignUp(data: SignUpCredential): Promise<SignUpResponse>
                     num_doc_identidad: userDetails?.numDocIdentidad || '',
                     correo: email,
                     correo_google: null,
-                    pais: userDetails?.pais || 'Perú',
+                    pais: userDetails?.pais || 'PER',
                     direccion: userDetails?.direccion || '',
                     sexo: userDetails?.sexo || 'M',
                     telefono: userDetails?.telefono || '',
@@ -194,7 +226,6 @@ export async function apiSignUp(data: SignUpCredential): Promise<SignUpResponse>
                     estado: 1,
                     contrasenia: 'SUPABASE_AUTH',
                     uuid: supabaseUuid
-                    // ❌ ELIMINADO: fecha_registro y fecha_modificacion
                 }
                 
                 const insertedUser = await createNewUser(newUserData)
@@ -204,6 +235,7 @@ export async function apiSignUp(data: SignUpCredential): Promise<SignUpResponse>
             } catch (createError) {
                 console.error('❌ Error al crear usuario en tabla personalizada:', createError)
                 
+                // ROLLBACK: Eliminar de Supabase Auth
                 try {
                     await supabase.auth.admin.deleteUser(supabaseUuid)
                     console.log('🔄 Rollback: Usuario eliminado de Auth debido a error en BD')
@@ -222,7 +254,7 @@ export async function apiSignUp(data: SignUpCredential): Promise<SignUpResponse>
         // 🎉 PASO 4: Retornar respuesta exitosa
         console.log('🎉 Registro completado exitosamente')
         
-        return {
+        const successResponse = {
             token: authData.session?.access_token || '',
             user: {
                 userId: supabaseUuid,
@@ -234,44 +266,15 @@ export async function apiSignUp(data: SignUpCredential): Promise<SignUpResponse>
             }
         }
         
+        console.log('📤 Enviando respuesta exitosa:', successResponse)
+        return successResponse
+        
     } catch (error) {
         console.error('💥 Error completo en signUp:', error)
         
         if (error instanceof Error) {
-            if (error.message.includes('ya está registrado') || 
-                error.message.includes('already registered') ||
-                error.message.includes('already been registered')) {
-                throw error
-            }
-            
-            if (error.message.includes('fetch') || 
-                error.message.includes('network') || 
-                error.message.includes('NetworkError') ||
-                error.message.includes('Failed to fetch')) {
-                throw new Error('Error de conexión. Verifica tu conexión a internet e intenta nuevamente.')
-            }
-            
-            if (error.message.includes('validation') || 
-                error.message.includes('invalid') ||
-                error.message.includes('format')) {
-                throw new Error('Los datos ingresados no son válidos. Verifica la información e intenta nuevamente.')
-            }
-            
-            if (error.message.includes('500') || 
-                error.message.includes('Internal Server Error') ||
-                error.message.includes('Database error')) {
-                throw new Error('Error del servidor. Por favor, intenta nuevamente en unos minutos.')
-            }
-            
-            if (error.message.includes('permission') || 
-                error.message.includes('unauthorized') ||
-                error.message.includes('forbidden')) {
-                throw new Error('Error de permisos. Contacta al administrador del sistema.')
-            }
-            
-            if (error.message.length > 10) {
-                throw error
-            }
+            // Re-lanzar errores específicos sin modificar
+            throw error
         }
         
         throw new Error('Ocurrió un error inesperado durante el registro. Por favor, intenta nuevamente.')
@@ -288,6 +291,22 @@ export async function apiVerifyDocIdentity(data: VerifyDocIdentityRequest): Prom
             return {
                 exists: false,
                 message: 'No existen usuarios registrados con este documento de identidad'
+            }
+        }
+        
+        // NUEVO: Verificar si algún usuario ya está registrado en la nueva plataforma
+        const registeredUser = users.find(user => user.contrasenia === 'SUPABASE_AUTH')
+        
+        if (registeredUser) {
+            // Enmascarar email para seguridad
+            const email = registeredUser.correo
+            const [localPart, domain] = email.split('@')
+            const maskedEmail = `${localPart.substring(0, 2)}${'*'.repeat(localPart.length - 2)}@${domain}`
+            
+            return {
+                exists: true,
+                singleUser: false, // Para indicar que no debe continuar con registro
+                message: `Ya está registrado en esta nueva plataforma con el correo ${maskedEmail}. Vaya a iniciar sesión.`
             }
         }
         

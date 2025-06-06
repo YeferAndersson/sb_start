@@ -1,3 +1,4 @@
+// src/auth/AuthProvider.tsx - CORREGIDO para no redirigir automáticamente en registro
 import { useRef, useImperativeHandle } from 'react'
 import AuthContext from './AuthContext'
 import appConfig from '@/configs/app.config'
@@ -72,12 +73,12 @@ function AuthProvider({ children }: AuthProviderProps) {
         setSessionSignedIn(false)
     }
 
-    const signIn = async (values: SignInCredential): AuthResult => {
+    const signIn = async (values: SignInCredential): Promise<AuthResult> => {
         try {
             const resp = await apiSignIn(values)
             if (resp) {
                 handleSignIn({ accessToken: resp.token }, resp.user)
-                redirect()
+                redirect() // Para signIn SÍ redirigir
                 return {
                     status: 'success',
                     message: '',
@@ -96,15 +97,26 @@ function AuthProvider({ children }: AuthProviderProps) {
         }
     }
 
-    const signUp = async (values: SignUpCredential): AuthResult => {
+    // 🔧 CORRECCIÓN: signUp NO redirige automáticamente
+    const signUp = async (values: SignUpCredential): Promise<AuthResult> => {
         try {
+            console.log('🚀 AuthProvider.signUp iniciado con:', values.email)
+            
             const resp = await apiSignUp(values)
+            console.log('📤 AuthProvider.signUp respuesta:', resp)
+            
             if (resp) {
-                handleSignIn({ accessToken: resp.token }, resp.user)
-                redirect()
+                // 🔧 CORRECCIÓN: NO establecer sesión inmediatamente
+                // NO hacer handleSignIn aquí porque el usuario necesita verificar email primero
+                // handleSignIn({ accessToken: resp.token }, resp.user)
+                
+                // 🔧 CORRECCIÓN: NO redirigir automáticamente
+                // redirect() 
+                
+                console.log('✅ AuthProvider.signUp completado sin redirección')
                 return {
                     status: 'success',
-                    message: '',
+                    message: 'Usuario registrado exitosamente. Verifica tu correo electrónico.',
                 }
             }
             return {
@@ -113,6 +125,7 @@ function AuthProvider({ children }: AuthProviderProps) {
             }
             // eslint-disable-next-line  @typescript-eslint/no-explicit-any
         } catch (errors: any) {
+            console.error('❌ AuthProvider.signUp error:', errors)
             return {
                 status: 'failed',
                 message: errors?.response?.data?.message || errors.toString(),
@@ -128,6 +141,7 @@ function AuthProvider({ children }: AuthProviderProps) {
             navigatorRef.current?.navigate(appConfig.unAuthenticatedEntryPath)
         }
     }
+    
     const oAuthSignIn = (
         callback: (payload: OauthSignInCallbackPayload) => void,
     ) => {

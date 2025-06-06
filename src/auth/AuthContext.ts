@@ -1,3 +1,4 @@
+// src/auth/AuthContext.ts - CORREGIDO
 import { createContext } from 'react'
 import type {
     SignInCredential,
@@ -10,19 +11,19 @@ import type {
 type Auth = {
     authenticated: boolean
     user: User
-    signIn: (values: SignInCredential) => AuthResult
-    signUp: (values: SignUpCredential) => AuthResult
+    signIn: (values: SignInCredential) => Promise<AuthResult>
+    signUp: (values: SignUpCredential) => Promise<AuthResult>
     signOut: () => void
     oAuthSignIn: (
         callback: (payload: OauthSignInCallbackPayload) => void,
     ) => void
 }
 
-const defaultFunctionPlaceHolder = async (): AuthResult => {
+const defaultFunctionPlaceHolder = async (): Promise<AuthResult> => {
     await new Promise((resolve) => setTimeout(resolve, 0))
     return {
-        status: '',
-        message: '',
+        status: 'failed',
+        message: 'Auth context not initialized',
     }
 }
 
@@ -38,8 +39,8 @@ const defaultOAuthSignInPlaceHolder = (
 const AuthContext = createContext<Auth>({
     authenticated: false,
     user: {},
-    signIn: async () => defaultFunctionPlaceHolder(),
-    signUp: async () => defaultFunctionPlaceHolder(),
+    signIn: defaultFunctionPlaceHolder,
+    signUp: defaultFunctionPlaceHolder,
     signOut: () => {},
     oAuthSignIn: defaultOAuthSignInPlaceHolder,
 })

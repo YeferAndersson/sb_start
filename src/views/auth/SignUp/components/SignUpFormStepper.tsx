@@ -1,4 +1,4 @@
-// src/views/auth/SignUp/components/SignUpFormStepper.tsx
+// src/views/auth/SignUp/components/SignUpFormStepper.tsx - CORREGIDO v2
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import Input from '@/components/ui/Input'
@@ -14,8 +14,8 @@ import { z } from 'zod'
 import type { ZodType } from 'zod'
 import type { CommonProps } from '@/@types/common'
 import type { TblUsuario } from '@/lib/supabase'
-import { apiVerifyDocIdentity } from '@/services/AuthService'
-import { PiIdentificationCardBold, PiUserBold, PiLockBold, PiAddressBookBold, PiCheckCircleBold  } from 'react-icons/pi'
+import { apiVerifyDocIdentity, apiCheckEmailExists } from '@/services/AuthService'
+import { PiIdentificationCardBold, PiUserBold, PiLockBold, PiAddressBookBold, PiCheckCircleBold } from 'react-icons/pi'
 
 interface SignUpFormStepperProps extends CommonProps {
     disableSubmit?: boolean
@@ -46,7 +46,7 @@ const STEPS = [
         id: 'complete',
         title: 'Completado',
         description: 'Registro finalizado',
-        icon: <PiLockBold className="h-4 w-4" />
+        icon: <PiCheckCircleBold className="h-4 w-4" />
     }
 ]
 
@@ -90,7 +90,7 @@ const accountSchema: ZodType<AccountCreationSchema> = z.object({
 })
 
 const personalSchema: ZodType<PersonalInfoSchema> = z.object({
-    pais: z.string().min(1, { message: 'El país es requerido' }),
+    pais: z.string().min(1, { message: 'El país es requerido' }).max(3, { message: 'El país debe tener máximo 3 caracteres (ej: PER)' }),
     direccion: z.string().min(1, { message: 'La dirección es requerida' }),
     sexo: z.string().min(1, { message: 'Seleccione su sexo' }),
     telefono: z.string().min(9, { message: 'Ingrese un número de teléfono válido' })
@@ -130,6 +130,10 @@ const SignUpFormStepper = (props: SignUpFormStepperProps) => {
         isOpen: false,
         email: ''
     })
+    const [alreadyRegisteredModal, setAlreadyRegisteredModal] = useState<{ isOpen: boolean; message: string }>({
+        isOpen: false,
+        message: ''
+    })
 
     const { signUp } = useAuth()
 
@@ -145,11 +149,12 @@ const SignUpFormStepper = (props: SignUpFormStepperProps) => {
 
     const personalForm = useForm<PersonalInfoSchema>({
         resolver: zodResolver(personalSchema),
-        defaultValues: { pais: 'Perú', sexo: 'M' }
+        defaultValues: { pais: 'PER', sexo: 'M' }
     })
 
     // Función para mostrar error modal
     const showError = (title: string, message: string) => {
+        console.error('❌ Mostrando error:', title, message)
         setErrorModal({ isOpen: true, title, message })
     }
 
@@ -159,15 +164,27 @@ const SignUpFormStepper = (props: SignUpFormStepperProps) => {
 
         setSubmitting(true)
         try {
+            console.log('🔍 Verificando documento:', values)
             const result = await apiVerifyDocIdentity(values)
             
             if (result.exists) {
+                // NUEVO: Verificar si ya está registrado en nueva plataforma
+                if (result.message.includes('Ya está registrado en esta nueva plataforma')) {
+                    setAlreadyRegisteredModal({ 
+                        isOpen: true, 
+                        message: result.message 
+                    })
+                    setSubmitting(false)
+                    return
+                }
+                
                 if (result.singleUser && result.user) {
                     setSelectedUser(result.user)
                     accountForm.setValue('userName', result.user.nombres || '')
                     accountForm.setValue('apellido', result.user.apellidos || '')
                     accountForm.setValue('email', result.user.correo)
                     setIsNewUser(false)
+                    console.log('👤 Usuario existente encontrado:', result.user.correo)
                 } else if (result.users && result.users.length > 0) {
                     setFoundUsers(result.users)
                     // Por ahora tomamos el primero, se puede mejorar para mostrar lista
@@ -177,10 +194,12 @@ const SignUpFormStepper = (props: SignUpFormStepperProps) => {
                     accountForm.setValue('apellido', firstUser.apellidos || '')
                     accountForm.setValue('email', firstUser.correo)
                     setIsNewUser(false)
+                    console.log('👤 Usuario existente encontrado (múltiple):', firstUser.correo)
                 }
             } else {
                 setIsNewUser(true)
                 setSelectedUser(null)
+                console.log('🆕 Usuario nuevo - DNI no encontrado')
             }
             
             setCurrentStep(1)
@@ -191,22 +210,44 @@ const SignUpFormStepper = (props: SignUpFormStepperProps) => {
         }
     }
 
-    // Step 2: Crear cuenta
+    // Step 2: Crear cuenta (CORREGIDO: con validación de email solo para nuevos)
     const handleAccountCreation = async (values: AccountCreationSchema) => {
         if (disableSubmit) return
 
-        // Para usuarios existentes, proceder a step 3
-        if (!isNewUser) {
-            setCurrentStep(2)
-            return
-        }
+        setSubmitting(true)
+        try {
+            // 🔧 CORRECCIÓN: Para usuarios existentes, NO verificar email
+            if (!isNewUser && selectedUser) {
+                console.log('⏭️ Usuario EXISTENTE - saltando verificación de email:', values.email)
+                setCurrentStep(2)
+                setSubmitting(false)
+                return
+            }
 
-        // Para nuevos usuarios, validar email y continuar
-        // Aquí podrías hacer una verificación de email si es necesario
-        setCurrentStep(2)
+            // Para usuarios NUEVOS, verificar si el email ya existe
+            console.log('🔍 Usuario NUEVO - verificando disponibilidad de email:', values.email)
+            
+            const emailExists = await apiCheckEmailExists(values.email)
+            
+            if (emailExists) {
+                console.warn('⚠️ Email ya existe para usuario nuevo')
+                setExistingEmailModal({ isOpen: true, email: values.email })
+                setSubmitting(false)
+                return
+            }
+
+            // Email disponible, continuar al siguiente paso
+            console.log('✅ Email disponible para usuario nuevo')
+            setCurrentStep(2)
+        } catch (error) {
+            const errorMessage = (error as Error).message || 'Error al verificar el correo electrónico'
+            showError('Error de Validación', errorMessage)
+        } finally {
+            setSubmitting(false)
+        }
     }
 
-    // Step 3: Información personal (final)
+    // Step 3: Información personal (CORREGIDO: mejor manejo de respuesta)
     const handlePersonalInfo = async (values: PersonalInfoSchema) => {
         if (disableSubmit) return
 
@@ -215,7 +256,13 @@ const SignUpFormStepper = (props: SignUpFormStepperProps) => {
             const documentValues = documentForm.getValues()
             const accountValues = accountForm.getValues()
             
-            const result = await signUp({
+            console.log('📝 Iniciando registro final...')
+            console.log('📋 Tipo de usuario:', isNewUser ? 'NUEVO' : 'EXISTENTE')
+            console.log('📋 Usuario seleccionado ID:', selectedUser?.id)
+            
+            // 🔧 CORRECCIÓN: Evitar redirección automática
+            // No usar await directamente aquí para evitar que useAuth redirija
+            const signUpPromise = signUp({
                 userName: accountValues.userName,
                 email: accountValues.email,
                 password: accountValues.password,
@@ -233,24 +280,30 @@ const SignUpFormStepper = (props: SignUpFormStepperProps) => {
                 }
             })
 
+            const result = await signUpPromise
+            
+            console.log('📤 Resultado del registro:', result)
+
             if (result?.status === 'failed') {
-                if (result.message.toLowerCase().includes('email') || result.message.toLowerCase().includes('correo')) {
-                    setExistingEmailModal({ isOpen: true, email: accountValues.email })
-                } else {
-                    showError('Error de Registro', result.message)
-                }
+                console.error('❌ Registro falló:', result.message)
+                showError('Error de Registro', result.message)
             } else {
-                // Registro exitoso
-                setCurrentStep(3)
-                setEmailVerificationModal({ isOpen: true, email: accountValues.email })
+                // ✅ Registro exitoso - IR AL PASO 4
+                console.log('🎉 Registro exitoso, yendo al paso 4')
+                console.log('📧 Mostrando modal de verificación para:', accountValues.email)
+                
+                // PRIMERO establecer el paso 4
+                setCurrentStep(3) // Paso 4 (índice 3)
+                
+                // LUEGO mostrar modal de verificación (sin esperar)
+                setTimeout(() => {
+                    setEmailVerificationModal({ isOpen: true, email: accountValues.email })
+                }, 100)
             }
         } catch (error) {
+            console.error('💥 Error en registro final:', error)
             const errorMessage = (error as Error).message || 'Error al registrar usuario'
-            if (errorMessage.toLowerCase().includes('email') || errorMessage.toLowerCase().includes('correo')) {
-                setExistingEmailModal({ isOpen: true, email: accountForm.getValues().email })
-            } else {
-                showError('Error de Registro', errorMessage)
-            }
+            showError('Error de Registro', errorMessage)
         } finally {
             setSubmitting(false)
         }
@@ -264,6 +317,7 @@ const SignUpFormStepper = (props: SignUpFormStepperProps) => {
     }
 
     const goToSignIn = () => {
+        // Usar location.href para evitar problemas de navegación
         window.location.href = '/sign-in'
     }
 
@@ -374,7 +428,7 @@ const SignUpFormStepper = (props: SignUpFormStepperProps) => {
                         {!isNewUser && selectedUser && (
                             <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                                 <p className="text-sm text-blue-800 dark:text-blue-200">
-                                    Se encontró una cuenta con tu documento. Configura tu contraseña para acceder.
+                                    ✅ Se encontró una cuenta con tu documento. Configura tu contraseña para acceder.
                                 </p>
                             </div>
                         )}
@@ -489,11 +543,12 @@ const SignUpFormStepper = (props: SignUpFormStepperProps) => {
                                 </Button>
                                 
                                 <Button
+                                    loading={isSubmitting}
                                     variant="solid"
                                     type="submit"
                                     className="flex-1"
                                 >
-                                    Continuar
+                                    {isSubmitting ? 'Validando...' : 'Continuar'}
                                 </Button>
                             </div>
                         </Form>
@@ -520,7 +575,7 @@ const SignUpFormStepper = (props: SignUpFormStepperProps) => {
 
                         <Form onSubmit={personalForm.handleSubmit(handlePersonalInfo)}>
                             <FormItem
-                                label="País"
+                                label="País (código de 3 letras)"
                                 invalid={Boolean(personalForm.formState.errors.pais)}
                                 errorMessage={personalForm.formState.errors.pais?.message}
                             >
@@ -530,7 +585,8 @@ const SignUpFormStepper = (props: SignUpFormStepperProps) => {
                                     render={({ field }) => (
                                         <Input
                                             type="text"
-                                            placeholder="País"
+                                            placeholder="PER"
+                                            maxLength={3}
                                             {...field}
                                         />
                                     )}
@@ -672,6 +728,17 @@ const SignUpFormStepper = (props: SignUpFormStepperProps) => {
                 onClose={() => setExistingEmailModal({ isOpen: false, email: '' })}
                 email={existingEmailModal.email}
                 onSignIn={goToSignIn}
+            />
+
+            {/* NUEVO: Modal para usuario ya registrado */}
+            <NotificationModal
+                isOpen={alreadyRegisteredModal.isOpen}
+                onClose={() => setAlreadyRegisteredModal({ isOpen: false, message: '' })}
+                title="Usuario Ya Registrado"
+                message={alreadyRegisteredModal.message}
+                variant="warning"
+                actionLabel="Ir a Iniciar Sesión"
+                onAction={goToSignIn}
             />
         </div>
     )
