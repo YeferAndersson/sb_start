@@ -82,10 +82,9 @@ export const EmailVerificationModal = ({
             onClose={onClose}
             title="¡Registro Exitoso!"
             variant="success"
-            actionLabel="Ir a mi correo"
+            actionLabel="OK"
             onAction={() => {
-                // Intenta abrir el cliente de correo predeterminado
-                window.open(`mailto:${email}`, '_blank')
+                {onClose}
             }}
             message={
                 <div className="space-y-4">
