@@ -68,8 +68,6 @@ const Servicios = () => {
         fetchServices();
     }, [user]);
 
-    // src/views/Servicios/Servicios.tsx (actualizar la función handleServiceSelect)
-
     const handleServiceSelect = (serviceId: number) => {
         // Redirigir según el ID del servicio
         switch (serviceId) {

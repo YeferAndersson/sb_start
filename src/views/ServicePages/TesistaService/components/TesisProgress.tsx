@@ -31,6 +31,7 @@ const TesisProgress: React.FC<TesisProgressProps> = ({
     { id: 10, title: "Revisión de formato", group: "Borrador de tesis" },
     { id: 11, title: "Revisión por jurados", group: "Borrador de tesis" },
     { id: 12, title: "Dictamen de borrador", group: "Borrador de tesis" },
+    { id: 13, title: "Carga de archivos para sustentación", group: "Borrador de tesis" },
     { id: 13, title: "Sustentación", group: "Borrador de tesis" },
     { id: 14, title: "Archivo final", group: "Borrador de tesis" },
     { id: 15, title: "Concluido", group: "Borrador de tesis" }
