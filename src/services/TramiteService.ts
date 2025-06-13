@@ -1,44 +1,57 @@
-// src/services/TramiteService.ts
+// src/services/TramiteService.ts - Corregido
 import {
-    getEstadosTramite,
-    getLineasVRI,
+    getEtapas,
+    getSublineasVri,
     getModalidades,
+    getTipoTrabajos,
     getTramitesByTesista,
     getTramiteById,
     createTramite,
-    updateEstadoTramite,
-    DicEstadoTramite,
-    DicLineaVRI,
-    DicModalidad,
-    Tramite
+    updateTramiteEtapa,
+    type DicEtapa,
+    type TblSublineaVri,
+    type DicModalidad,
+    type DicTipoTrabajo,
+    type TblTramite,
+    type TblTramiteInsert
 } from '@/lib/supabase';
 
-// Obtener todos los estados de trámite
-export async function obtenerEstadosTramite() {
+// Obtener todas las etapas
+export async function obtenerEtapas(): Promise<DicEtapa[]> {
     try {
-        return await getEstadosTramite();
+        return await getEtapas();
     } catch (error) {
-        console.error('Error al obtener estados de trámite:', error);
+        console.error('Error al obtener etapas:', error);
         throw error;
     }
 }
 
-// Obtener todas las líneas VRI
-export async function obtenerLineasVRI() {
+// Obtener todas las sublíneas VRI
+export async function obtenerSublineasVri(carreraId?: number) {
     try {
-        return await getLineasVRI();
+        return await getSublineasVri(carreraId);
     } catch (error) {
-        console.error('Error al obtener líneas VRI:', error);
+        console.error('Error al obtener sublíneas VRI:', error);
         throw error;
     }
 }
 
 // Obtener todas las modalidades
-export async function obtenerModalidades() {
+export async function obtenerModalidades(): Promise<DicModalidad[]> {
     try {
         return await getModalidades();
     } catch (error) {
         console.error('Error al obtener modalidades:', error);
+        throw error;
+    }
+}
+
+// Obtener todos los tipos de trabajo
+export async function obtenerTipoTrabajos(): Promise<DicTipoTrabajo[]> {
+    try {
+        return await getTipoTrabajos();
+    } catch (error) {
+        console.error('Error al obtener tipos de trabajo:', error);
         throw error;
     }
 }
@@ -64,7 +77,7 @@ export async function obtenerTramitePorId(tramiteId: number) {
 }
 
 // Crear un nuevo trámite
-export async function crearTramite(tramiteData: Omit<Tramite, 'id' | 'codigo' | 'fecharegistro'>) {
+export async function crearTramite(tramiteData: TblTramiteInsert): Promise<TblTramite> {
     try {
         return await createTramite(tramiteData);
     } catch (error) {
@@ -74,11 +87,11 @@ export async function crearTramite(tramiteData: Omit<Tramite, 'id' | 'codigo' | 
 }
 
 // Actualizar el estado de un trámite
-export async function actualizarEstadoTramite(tramiteId: number, nuevoEstadoId: number) {
+export async function actualizarEtapaTramite(tramiteId: number, nuevaEtapaId: number): Promise<TblTramite> {
     try {
-        return await updateEstadoTramite(tramiteId, nuevoEstadoId);
+        return await updateTramiteEtapa(tramiteId, nuevaEtapaId);
     } catch (error) {
-        console.error('Error al actualizar estado del trámite:', error);
+        console.error('Error al actualizar etapa del trámite:', error);
         throw error;
     }
 }

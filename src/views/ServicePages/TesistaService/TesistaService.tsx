@@ -1,14 +1,15 @@
-// src/views/ServicePages/TesistaService/TesistaService.tsx
+// src/views/ServicePages/TesistaService/TesistaService.tsx - Con animaciones motion
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'motion/react';
 import { useAuth } from '@/auth';
 import {
     obtenerTramitesPorTesista,
     obtenerTramitePorId,
-    obtenerEstadosTramite
+    obtenerEtapas
 } from '@/services/TramiteService';
 import { obtenerTesistaPorUsuario } from '@/services/TesistaService';
-import { Tramite, Tesista, DicEstadoTramite } from '@/lib/supabase';
+import type { TblTramite, TblTesista, DicEtapa } from '@/lib/supabase';
 
 // Componentes auxiliares
 import FAQ from './components/FAQ';
@@ -25,7 +26,7 @@ import {
     FaDownload, FaBook, FaGraduationCap, FaShieldAlt,
     FaRocket, FaClipboard, FaArrowRight
 } from 'react-icons/fa';
-import { Steps, Button, Badge, Tabs, Spinner } from '@/components/ui';
+import { Badge, Spinner } from '@/components/ui';
 import TesisProgress from './components/TesisProgress';
 
 const TesistaService = () => {
@@ -33,10 +34,10 @@ const TesistaService = () => {
     const { user } = useAuth();
     const [activeTab, setActiveTab] = useState('overview');
     const [loading, setLoading] = useState(true);
-    const [tesista, setTesista] = useState<Tesista | null>(null);
-    const [tramiteActual, setTramiteActual] = useState<Tramite | null>(null);
-    const [tramites, setTramites] = useState<Tramite[]>([]);
-    const [estadosTramite, setEstadosTramite] = useState<DicEstadoTramite[]>([]);
+    const [tesista, setTesista] = useState<TblTesista | null>(null);
+    const [tramiteActual, setTramiteActual] = useState<TblTramite | null>(null);
+    const [tramites, setTramites] = useState<TblTramite[]>([]);
+    const [etapas, setEtapas] = useState<DicEtapa[]>([]);
     const [etapaActual, setEtapaActual] = useState(1);
 
     // Cargar datos del tesista y sus trámites
@@ -53,18 +54,18 @@ const TesistaService = () => {
                     const tramitesData = await obtenerTramitesPorTesista(tesistaData.id);
                     setTramites(tramitesData);
 
-                    // Obtener la lista completa de estados de trámite
-                    const estadosData = await obtenerEstadosTramite();
-                    setEstadosTramite(estadosData);
+                    // Obtener la lista completa de etapas
+                    const etapasData = await obtenerEtapas();
+                    setEtapas(etapasData);
 
                     // Establecer el trámite actual (el más reciente)
                     if (tramitesData.length > 0) {
                         const tramiteReciente = tramitesData[0]; // Ya está ordenado por fecha descendente
                         setTramiteActual(tramiteReciente);
 
-                        // Encontrar la etapa actual basada en el estado del trámite
-                        const estadoActual = tramiteReciente.estado?.id || 1;
-                        setEtapaActual(estadoActual);
+                        // Encontrar la etapa actual basada en la etapa del trámite
+                        const etapaActualId = tramiteReciente.id_etapa || 1;
+                        setEtapaActual(etapaActualId);
                     }
                 }
             } catch (error) {
@@ -77,8 +78,8 @@ const TesistaService = () => {
         cargarDatos();
     }, [user]);
 
-    // Mensajes específicos según el estado del trámite
-    const mensajesEstado = {
+    // Mensajes específicos según la etapa del trámite
+    const mensajesEtapa: Record<number, { titulo: string; descripcion: string }> = {
         1: {
             titulo: "Carga de proyecto pendiente",
             descripcion: "Debes subir tu proyecto de tesis para iniciar el proceso."
@@ -106,38 +107,6 @@ const TesistaService = () => {
         7: {
             titulo: "¡Proyecto aprobado!",
             descripcion: "Tu proyecto ha sido aprobado. Ahora puedes continuar con el desarrollo de tu tesis."
-        },
-        8: {
-            titulo: "Etapa de borrador habilitada",
-            descripcion: "Puedes comenzar a subir tu borrador de tesis cuando lo tengas listo."
-        },
-        9: {
-            titulo: "Carga de borrador pendiente",
-            descripcion: "Debes subir tu borrador de tesis para continuar con el proceso."
-        },
-        10: {
-            titulo: "Borrador en revisión de formato",
-            descripcion: "El coordinador está revisando el formato de tu borrador. Este proceso puede tomar hasta 3 días hábiles."
-        },
-        11: {
-            titulo: "Borrador en revisión por jurados",
-            descripcion: "Los jurados están revisando tu borrador de tesis. Este proceso puede tomar hasta 15 días hábiles."
-        },
-        12: {
-            titulo: "Dictamen de borrador en proceso",
-            descripcion: "El presidente del jurado está emitiendo el dictamen sobre tu borrador de tesis."
-        },
-        13: {
-            titulo: "¡Programar sustentación!",
-            descripcion: "Tu borrador ha sido aprobado. Debes coordinar la fecha de sustentación."
-        },
-        14: {
-            titulo: "Carga de archivo final pendiente",
-            descripcion: "Debes subir la versión final de tu tesis incorporando las observaciones de la sustentación."
-        },
-        15: {
-            titulo: "¡Trámite concluido!",
-            descripcion: "¡Felicidades! Has completado exitosamente todo el proceso de tesis."
         }
     };
 
@@ -145,22 +114,22 @@ const TesistaService = () => {
     const progressStats = [
         {
             label: "Etapa Actual",
-            value: estadosTramite.find(e => e.id === etapaActual)?.nombre || "Carga de proyecto",
+            value: etapas.find(e => e.id === etapaActual)?.nombre || "Carga de proyecto",
             icon: <FaRocket />
         },
         {
             label: "Días en proceso",
-            value: tramiteActual ? calcularDiasEnProceso(tramiteActual.fecharegistro) : "-",
+            value: tramiteActual ? calcularDiasEnProceso(tramiteActual.fecha_registro) : "-",
             icon: <FaCalendarAlt />
         },
         {
             label: "Estado",
-            value: tramiteActual?.estado?.estado === 1 ? "Activo" : tramiteActual?.estado?.estado || "Pendiente",
+            value: tramiteActual?.estado_tramite === 1 ? "Activo" : "Pendiente",
             icon: <FaClipboardCheck />
         },
         {
             label: "Código",
-            value: tramiteActual?.codigo || "Sin asignar",
+            value: tramiteActual?.codigo_proyecto || "Sin asignar",
             icon: <FaShieldAlt />
         }
     ];
@@ -221,64 +190,8 @@ const TesistaService = () => {
             step: 7,
             title: "Proyecto aprobado",
             description: "Aprobación oficial del proyecto de tesis",
-            completed: etapaActual > 7,
+            completed: etapaActual >= 7,
             current: etapaActual === 7
-        },
-        {
-            step: 8,
-            title: "Borrador habilitado",
-            description: "Habilitación para carga de borrador",
-            completed: etapaActual > 8,
-            current: etapaActual === 8
-        },
-        {
-            step: 9,
-            title: "Carga de borrador",
-            description: "Subir el borrador de tesis",
-            completed: etapaActual > 9,
-            current: etapaActual === 9
-        },
-        {
-            step: 10,
-            title: "Revisión de formato de borrador",
-            description: "Verificación de formato del borrador",
-            completed: etapaActual > 10,
-            current: etapaActual === 10
-        },
-        {
-            step: 11,
-            title: "Revisión por jurados",
-            description: "Evaluación del borrador por jurados",
-            completed: etapaActual > 11,
-            current: etapaActual === 11
-        },
-        {
-            step: 12,
-            title: "Dictamen de borrador",
-            description: "Dictamen final del borrador de tesis",
-            completed: etapaActual > 12,
-            current: etapaActual === 12
-        },
-        {
-            step: 13,
-            title: "Sustentación",
-            description: "Defensa de la tesis ante el jurado",
-            completed: etapaActual > 13,
-            current: etapaActual === 13
-        },
-        {
-            step: 14,
-            title: "Archivo final",
-            description: "Carga del documento final de tesis",
-            completed: etapaActual > 14,
-            current: etapaActual === 14
-        },
-        {
-            step: 15,
-            title: "Trámite concluido",
-            description: "Proceso de tesis finalizado exitosamente",
-            completed: etapaActual >= 15,
-            current: etapaActual === 15
         }
     ];
 
@@ -330,266 +243,375 @@ const TesistaService = () => {
 
     if (loading) {
         return (
-            <div className="flex justify-center items-center h-screen">
-                <Spinner size={40} />
-            </div>
+            <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="flex justify-center items-center h-screen"
+            >
+                <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+                >
+                    <Spinner size={40} />
+                </motion.div>
+            </motion.div>
         );
     }
 
     return (
-        <Container>
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                {/* Columna izquierda - Steps Verticales */}
-                <TesisProgress
-                    etapaActual={etapaActual}
-                    tramiteActual={tramiteActual}
-                    estadosTramite={estadosTramite}
-                />
+        <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6 }}
+        >
+            <Container>
+                <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                    {/* Columna izquierda - Steps Verticales */}
+                    <motion.div
+                        initial={{ opacity: 0, x: -50 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.5, delay: 0.2 }}
+                    >
+                        <TesisProgress
+                            etapaActual={etapaActual}
+                            tramiteActual={tramiteActual}
+                            estadosTramite={etapas}
+                        />
+                    </motion.div>
 
-                {/* Columna derecha - Contenido principal */}
-                <div className="lg:col-span-3">
-                    {/* Primera fila: Todo en un solo card (Encabezado, Información importante y Estadísticas) */}
-                    <div className="mb-6">
-                        <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-md border border-gray-200 dark:border-gray-700 p-5">
-                            {/* Encabezado y badge */}
-                            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-5 pb-4 border-b border-gray-200 dark:border-gray-700">
-                                <div>
-                                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                                        Portal Estudiante - PILAR
-                                    </h1>
-                                    <p className="text-gray-600 dark:text-gray-400">
-                                        Bienvenido al Sistema de Investigación y Tesis
-                                    </p>
-                                </div>
-                                <Badge
-                                    content={`Etapa ${etapaActual}: ${estadosTramite.find(e => e.id === etapaActual)?.nombre || "Carga de proyecto"}`}
-                                    className="mt-2 md:mt-0"
-                                />
-                            </div>
-
-                            {/* Información importante */}
-                            {tramiteActual && tramiteActual.estado && mensajesEstado[tramiteActual.estado.id] && (
-                                <InfoBanner
-                                    title={mensajesEstado[tramiteActual.estado.id].titulo}
-                                    description={mensajesEstado[tramiteActual.estado.id].descripcion}
-                                    actionText={tramiteActual.estado.id <= 2 ? "Cargar Proyecto" : ""}
-                                    actionUrl=""
-                                />
-                            )}
-
-                            {/* Estadísticas */}
-                            <div>
-                                <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Estadísticas del Proceso</h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                                    {progressStats.map((stat, index) => (
-                                        <div
-                                            key={index}
-                                            className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 shadow-sm"
-                                        >
-                                            <div className="flex items-center space-x-3">
-                                                <div className="p-2 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400">
-                                                    {stat.icon}
-                                                </div>
-                                                <div>
-                                                    <p className="text-sm text-gray-500 dark:text-gray-400">{stat.label}</p>
-                                                    <p className="font-semibold text-gray-900 dark:text-white">{stat.value}</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Segunda fila: Solo tabs */}
-                    <div className="grid grid-cols-1 gap-6">
-                        {/* Sección de tabs */}
-                        <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-md border border-gray-200 dark:border-gray-700 p-5">
-                            <div className="tabs">
-                                <div role="tablist" className="flex space-x-2 border-b border-gray-200 dark:border-gray-700 mb-6">
-                                    <button
-                                        className={`py-2 px-4 font-medium text-sm focus:outline-none ${activeTab === 'overview'
-                                            ? 'text-primary border-b-2 border-primary'
-                                            : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
-                                            }`}
-                                        onClick={() => setActiveTab('overview')}
-                                    >
-                                        Vista general
-                                    </button>
-                                    <button
-                                        className={`py-2 px-4 font-medium text-sm focus:outline-none ${activeTab === 'process'
-                                            ? 'text-primary border-b-2 border-primary'
-                                            : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
-                                            }`}
-                                        onClick={() => setActiveTab('process')}
-                                    >
-                                        Proceso detallado
-                                    </button>
-                                    <button
-                                        className={`py-2 px-4 font-medium text-sm focus:outline-none ${activeTab === 'faq'
-                                            ? 'text-primary border-b-2 border-primary'
-                                            : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
-                                            }`}
-                                        onClick={() => setActiveTab('faq')}
-                                    >
-                                        Preguntas frecuentes
-                                    </button>
-                                    <button
-                                        className={`py-2 px-4 font-medium text-sm focus:outline-none ${activeTab === 'documents'
-                                            ? 'text-primary border-b-2 border-primary'
-                                            : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
-                                            }`}
-                                        onClick={() => setActiveTab('documents')}
-                                    >
-                                        Documentos
-                                    </button>
-                                </div>
-
-                                {/* Vista general */}
-                                {activeTab === 'overview' && (
-                                    <div className="tab-content">
-                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                            <InfoCard
-                                                icon={<FaFileAlt size={20} />}
-                                                title="Mi proyecto actual"
-                                                description="Ver detalles de tu proyecto de tesis, estado actual y próximos pasos."
-                                                iconBgClass="bg-gray-100 dark:bg-gray-700"
-                                                iconTextClass="text-primary dark:text-primary"
-                                                onClick={() => navigate('/pilar/pregrado/estudiantes/etapa1/resumen')}
-                                            />
-                                            <InfoCard
-                                                icon={<FaUsers size={20} />}
-                                                title="Mis jurados"
-                                                description="Información de contacto y perfil de tus jurados asignados."
-                                                iconBgClass="bg-indigo-100 dark:bg-indigo-900/40"
-                                                iconTextClass="text-indigo-600 dark:text-indigo-400"
-                                                onClick={() => etapaActual >= 4 ? navigate('/pilar/pregrado/estudiantes/jurados') : null}
-                                                className={etapaActual >= 4 ? '' : 'opacity-60 cursor-not-allowed'}
-                                            />
-                                            <InfoCard
-                                                icon={<FaFileSignature size={20} />}
-                                                title="Formatos y plantillas"
-                                                description="Descarga formatos oficiales para cada etapa del proceso."
-                                                iconBgClass="bg-green-100 dark:bg-green-900/40"
-                                                iconTextClass="text-green-600 dark:text-green-400"
-                                                onClick={() => setActiveTab('documents')}
-                                            />
-                                            <InfoCard
-                                                icon={<FaCalendarAlt size={20} />}
-                                                title="Calendario académico"
-                                                description="Fechas importantes del semestre para investigación y tesis."
-                                                iconBgClass="bg-orange-100 dark:bg-orange-900/40"
-                                                iconTextClass="text-orange-600 dark:text-orange-400"
-                                            />
-                                            <InfoCard
-                                                icon={<FaUserGraduate size={20} />}
-                                                title="Asesorías virtuales"
-                                                description="Solicita o consulta tus asesorías programadas."
-                                                iconBgClass="bg-purple-100 dark:bg-purple-900/40"
-                                                iconTextClass="text-purple-600 dark:text-purple-400"
-                                            />
-                                            <InfoCard
-                                                icon={<FaQuestion size={20} />}
-                                                title="Centro de ayuda"
-                                                description="Resuelve dudas comunes sobre el proceso de tesis."
-                                                iconBgClass="bg-gray-100 dark:bg-gray-700"
-                                                iconTextClass="text-warning dark:text-warning"
-                                                onClick={() => setActiveTab('faq')}
-                                            />
-                                        </div>
+                    {/* Columna derecha - Contenido principal */}
+                    <div className="lg:col-span-3">
+                        {/* Primera fila: Todo en un solo card */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 30 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.5, delay: 0.3 }}
+                            className="mb-6"
+                        >
+                            <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-md border border-gray-200 dark:border-gray-700 p-5">
+                                {/* Encabezado y badge */}
+                                <motion.div
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.4 }}
+                                    className="flex flex-col md:flex-row justify-between items-start md:items-center mb-5 pb-4 border-b border-gray-200 dark:border-gray-700"
+                                >
+                                    <div>
+                                        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                                            Portal Estudiante - PILAR
+                                        </h1>
+                                        <p className="text-gray-600 dark:text-gray-400">
+                                            Bienvenido al Sistema de Investigación y Tesis
+                                        </p>
                                     </div>
+                                    <motion.div
+                                        initial={{ scale: 0 }}
+                                        animate={{ scale: 1 }}
+                                        transition={{ delay: 0.5, type: "spring" }}
+                                    >
+                                        <Badge
+                                            content={`Etapa ${etapaActual}: ${etapas.find(e => e.id === etapaActual)?.nombre || "Carga de proyecto"}`}
+                                            className="mt-2 md:mt-0"
+                                        />
+                                    </motion.div>
+                                </motion.div>
+
+                                {/* Información importante */}
+                                {tramiteActual && mensajesEtapa[etapaActual] && (
+                                    <motion.div
+                                        initial={{ opacity: 0, scale: 0.95 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        transition={{ delay: 0.6 }}
+                                    >
+                                        <InfoBanner
+                                            title={mensajesEtapa[etapaActual].titulo}
+                                            description={mensajesEtapa[etapaActual].descripcion}
+                                            actionText={etapaActual <= 2 ? "Cargar Proyecto" : ""}
+                                            actionUrl=""
+                                        />
+                                    </motion.div>
                                 )}
 
-                                {/* Proceso detallado */}
-                                {activeTab === 'process' && (
-                                    <div className="tab-content">
-                                        <div className="space-y-4">
-                                            <div>
-                                                <h3 className="font-bold text-lg text-gray-900 dark:text-white mb-4">
-                                                    Proceso completo de tesis
-                                                </h3>
-                                                <p className="text-gray-700 dark:text-gray-300 mb-4">
-                                                    Aquí encontrarás el detalle de cada etapa del proceso de investigación y tesis.
-                                                    Actualmente te encuentras en la <strong>Etapa {etapaActual}</strong>. Las etapas
-                                                    marcadas en verde ya han sido completadas.
-                                                </p>
-
-                                                <div className="space-y-2">
-                                                    {processStages.map((stage) => (
-                                                        <ProcessStage
-                                                            key={stage.step}
-                                                            step={stage.step}
-                                                            title={stage.title}
-                                                            description={stage.description}
-                                                            isActive={stage.current}
-                                                            isCompleted={stage.completed}
-                                                            tips={[]} // Puedes definir consejos específicos para cada etapa si lo deseas
-                                                        />
-                                                    ))}
-                                                </div>
-                                            </div>
-
-                                            <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4">
-                                                <div className="flex space-x-3">
-                                                    <FaLightbulb className="text-amber-500 flex-shrink-0 mt-1" size={20} />
+                                {/* Estadísticas */}
+                                <motion.div
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.7 }}
+                                >
+                                    <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Estadísticas del Proceso</h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                        {progressStats.map((stat, index) => (
+                                            <motion.div
+                                                key={index}
+                                                initial={{ opacity: 0, y: 20 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                transition={{ delay: 0.8 + index * 0.1 }}
+                                                whileHover={{ y: -2 }}
+                                                className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow"
+                                            >
+                                                <div className="flex items-center space-x-3">
+                                                    <div className="p-2 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400">
+                                                        {stat.icon}
+                                                    </div>
                                                     <div>
-                                                        <h3 className="font-semibold text-amber-700 dark:text-amber-400">
-                                                            Consideración importante
-                                                        </h3>
-                                                        <p className="text-gray-700 dark:text-gray-300 text-sm">
-                                                            Recuerda que desde la fecha de emisión del acta de aprobación de proyecto,
-                                                            tienes un plazo mínimo de 90 días y un máximo de 2 años para iniciar el
-                                                            proceso de Borrador de tesis.
-                                                        </p>
+                                                        <p className="text-sm text-gray-500 dark:text-gray-400">{stat.label}</p>
+                                                        <p className="font-semibold text-gray-900 dark:text-white">{stat.value}</p>
                                                     </div>
                                                 </div>
-                                            </div>
-                                        </div>
+                                            </motion.div>
+                                        ))}
                                     </div>
-                                )}
-
-                                {/* Preguntas frecuentes */}
-                                {activeTab === 'faq' && (
-                                    <div className="tab-content">
-                                        <div>
-                                            <h3 className="font-bold text-lg text-gray-900 dark:text-white mb-4">
-                                                Preguntas frecuentes
-                                            </h3>
-                                            <FAQ />
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Documentos */}
-                                {activeTab === 'documents' && (
-                                    <div className="tab-content">
-                                        <div>
-                                            <h3 className="font-bold text-lg text-gray-900 dark:text-white mb-4">
-                                                Documentos y formatos
-                                            </h3>
-
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                {documents.map((doc, idx) => (
-                                                    <DownloadableDocument
-                                                        key={idx}
-                                                        title={doc.title}
-                                                        description={doc.description}
-                                                        icon={doc.icon}
-                                                        iconBgClass={doc.iconBgClass}
-                                                        iconTextClass={doc.iconTextClass}
-                                                    />
-                                                ))}
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
+                                </motion.div>
                             </div>
-                        </div>
+                        </motion.div>
+
+                        {/* Segunda fila: Solo tabs */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 30 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.5, delay: 0.4 }}
+                            className="grid grid-cols-1 gap-6"
+                        >
+                            <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-md border border-gray-200 dark:border-gray-700 p-5">
+                                <div className="tabs">
+                                    <div role="tablist" className="flex space-x-2 border-b border-gray-200 dark:border-gray-700 mb-6">
+                                        {[
+                                            { id: 'overview', label: 'Vista general' },
+                                            { id: 'process', label: 'Proceso detallado' },
+                                            { id: 'faq', label: 'Preguntas frecuentes' },
+                                            { id: 'documents', label: 'Documentos' }
+                                        ].map((tab, index) => (
+                                            <motion.button
+                                                key={tab.id}
+                                                initial={{ opacity: 0, y: 10 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                transition={{ delay: 0.5 + index * 0.1 }}
+                                                whileHover={{ scale: 1.05 }}
+                                                whileTap={{ scale: 0.95 }}
+                                                className={`py-2 px-4 font-medium text-sm focus:outline-none transition-colors ${
+                                                    activeTab === tab.id
+                                                        ? 'text-primary border-b-2 border-primary'
+                                                        : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                                                }`}
+                                                onClick={() => setActiveTab(tab.id)}
+                                            >
+                                                {tab.label}
+                                            </motion.button>
+                                        ))}
+                                    </div>
+
+                                    <AnimatePresence mode="wait">
+                                        {/* Vista general */}
+                                        {activeTab === 'overview' && (
+                                            <motion.div
+                                                key="overview"
+                                                initial={{ opacity: 0, x: 20 }}
+                                                animate={{ opacity: 1, x: 0 }}
+                                                exit={{ opacity: 0, x: -20 }}
+                                                transition={{ duration: 0.3 }}
+                                                className="tab-content"
+                                            >
+                                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                                    {[
+                                                        {
+                                                            icon: <FaFileAlt size={20} />,
+                                                            title: "Mi proyecto actual",
+                                                            description: "Ver detalles de tu proyecto de tesis, estado actual y próximos pasos.",
+                                                            iconBgClass: "bg-gray-100 dark:bg-gray-700",
+                                                            iconTextClass: "text-primary dark:text-primary",
+                                                            onClick: () => navigate('/pilar/pregrado/estudiantes/etapa1/resumen')
+                                                        },
+                                                        {
+                                                            icon: <FaUsers size={20} />,
+                                                            title: "Mis jurados",
+                                                            description: "Información de contacto y perfil de tus jurados asignados.",
+                                                            iconBgClass: "bg-indigo-100 dark:bg-indigo-900/40",
+                                                            iconTextClass: "text-indigo-600 dark:text-indigo-400",
+                                                            onClick: () => etapaActual >= 4 ? navigate('/pilar/pregrado/estudiantes/jurados') : null,
+                                                            className: etapaActual >= 4 ? '' : 'opacity-60 cursor-not-allowed'
+                                                        },
+                                                        {
+                                                            icon: <FaFileSignature size={20} />,
+                                                            title: "Formatos y plantillas",
+                                                            description: "Descarga formatos oficiales para cada etapa del proceso.",
+                                                            iconBgClass: "bg-green-100 dark:bg-green-900/40",
+                                                            iconTextClass: "text-green-600 dark:text-green-400",
+                                                            onClick: () => setActiveTab('documents')
+                                                        },
+                                                        {
+                                                            icon: <FaCalendarAlt size={20} />,
+                                                            title: "Calendario académico",
+                                                            description: "Fechas importantes del semestre para investigación y tesis.",
+                                                            iconBgClass: "bg-orange-100 dark:bg-orange-900/40",
+                                                            iconTextClass: "text-orange-600 dark:text-orange-400"
+                                                        },
+                                                        {
+                                                            icon: <FaUserGraduate size={20} />,
+                                                            title: "Asesorías virtuales",
+                                                            description: "Solicita o consulta tus asesorías programadas.",
+                                                            iconBgClass: "bg-purple-100 dark:bg-purple-900/40",
+                                                            iconTextClass: "text-purple-600 dark:text-purple-400"
+                                                        },
+                                                        {
+                                                            icon: <FaQuestion size={20} />,
+                                                            title: "Centro de ayuda",
+                                                            description: "Resuelve dudas comunes sobre el proceso de tesis.",
+                                                            iconBgClass: "bg-gray-100 dark:bg-gray-700",
+                                                            iconTextClass: "text-warning dark:text-warning",
+                                                            onClick: () => setActiveTab('faq')
+                                                        }
+                                                    ].map((card, index) => (
+                                                        <motion.div
+                                                            key={index}
+                                                            initial={{ opacity: 0, y: 20 }}
+                                                            animate={{ opacity: 1, y: 0 }}
+                                                            transition={{ delay: index * 0.1 }}
+                                                            whileHover={{ y: -4 }}
+                                                        >
+                                                            <InfoCard
+                                                                icon={card.icon}
+                                                                title={card.title}
+                                                                description={card.description}
+                                                                iconBgClass={card.iconBgClass}
+                                                                iconTextClass={card.iconTextClass}
+                                                                onClick={card.onClick}
+                                                                className={card.className}
+                                                            />
+                                                        </motion.div>
+                                                    ))}
+                                                </div>
+                                            </motion.div>
+                                        )}
+
+                                        {/* Proceso detallado */}
+                                        {activeTab === 'process' && (
+                                            <motion.div
+                                                key="process"
+                                                initial={{ opacity: 0, x: 20 }}
+                                                animate={{ opacity: 1, x: 0 }}
+                                                exit={{ opacity: 0, x: -20 }}
+                                                transition={{ duration: 0.3 }}
+                                                className="tab-content"
+                                            >
+                                                <div className="space-y-4">
+                                                    <div>
+                                                        <h3 className="font-bold text-lg text-gray-900 dark:text-white mb-4">
+                                                            Proceso completo de tesis
+                                                        </h3>
+                                                        <p className="text-gray-700 dark:text-gray-300 mb-4">
+                                                            Aquí encontrarás el detalle de cada etapa del proceso de investigación y tesis.
+                                                            Actualmente te encuentras en la <strong>Etapa {etapaActual}</strong>. Las etapas
+                                                            marcadas en verde ya han sido completadas.
+                                                        </p>
+
+                                                        <div className="space-y-2">
+                                                            {processStages.map((stage, index) => (
+                                                                <motion.div
+                                                                    key={stage.step}
+                                                                    initial={{ opacity: 0, x: -20 }}
+                                                                    animate={{ opacity: 1, x: 0 }}
+                                                                    transition={{ delay: index * 0.1 }}
+                                                                >
+                                                                    <ProcessStage
+                                                                        step={stage.step}
+                                                                        title={stage.title}
+                                                                        description={stage.description}
+                                                                        isActive={stage.current}
+                                                                        isCompleted={stage.completed}
+                                                                        tips={[]}
+                                                                    />
+                                                                </motion.div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+
+                                                    <motion.div
+                                                        initial={{ opacity: 0, y: 20 }}
+                                                        animate={{ opacity: 1, y: 0 }}
+                                                        transition={{ delay: 0.3 }}
+                                                        className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4"
+                                                    >
+                                                        <div className="flex space-x-3">
+                                                            <FaLightbulb className="text-amber-500 flex-shrink-0 mt-1" size={20} />
+                                                            <div>
+                                                                <h3 className="font-semibold text-amber-700 dark:text-amber-400">
+                                                                    Consideración importante
+                                                                </h3>
+                                                                <p className="text-gray-700 dark:text-gray-300 text-sm">
+                                                                    Recuerda que desde la fecha de emisión del acta de aprobación de proyecto,
+                                                                    tienes un plazo mínimo de 90 días y un máximo de 2 años para iniciar el
+                                                                    proceso de Borrador de tesis.
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    </motion.div>
+                                                </div>
+                                            </motion.div>
+                                        )}
+
+                                        {/* Preguntas frecuentes */}
+                                        {activeTab === 'faq' && (
+                                            <motion.div
+                                                key="faq"
+                                                initial={{ opacity: 0, x: 20 }}
+                                                animate={{ opacity: 1, x: 0 }}
+                                                exit={{ opacity: 0, x: -20 }}
+                                                transition={{ duration: 0.3 }}
+                                                className="tab-content"
+                                            >
+                                                <div>
+                                                    <h3 className="font-bold text-lg text-gray-900 dark:text-white mb-4">
+                                                        Preguntas frecuentes
+                                                    </h3>
+                                                    <FAQ />
+                                                </div>
+                                            </motion.div>
+                                        )}
+
+                                        {/* Documentos */}
+                                        {activeTab === 'documents' && (
+                                            <motion.div
+                                                key="documents"
+                                                initial={{ opacity: 0, x: 20 }}
+                                                animate={{ opacity: 1, x: 0 }}
+                                                exit={{ opacity: 0, x: -20 }}
+                                                transition={{ duration: 0.3 }}
+                                                className="tab-content"
+                                            >
+                                                <div>
+                                                    <h3 className="font-bold text-lg text-gray-900 dark:text-white mb-4">
+                                                        Documentos y formatos
+                                                    </h3>
+
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                        {documents.map((doc, idx) => (
+                                                            <motion.div
+                                                                key={idx}
+                                                                initial={{ opacity: 0, y: 20 }}
+                                                                animate={{ opacity: 1, y: 0 }}
+                                                                transition={{ delay: idx * 0.1 }}
+                                                            >
+                                                                <DownloadableDocument
+                                                                    title={doc.title}
+                                                                    description={doc.description}
+                                                                    icon={doc.icon}
+                                                                    iconBgClass={doc.iconBgClass}
+                                                                    iconTextClass={doc.iconTextClass}
+                                                                />
+                                                            </motion.div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
+                                </div>
+                            </div>
+                        </motion.div>
                     </div>
                 </div>
-            </div>
-        </Container>
+            </Container>
+        </motion.div>
     );
 };
 

@@ -1,4 +1,4 @@
-// src/services/TesistaService.ts
+// src/services/TesistaService.ts - Corregido
 import {
     getFacultades,
     getCarreras,
@@ -6,14 +6,15 @@ import {
     getTesistaByUsuario,
     checkIsTesista,
     createTesista,
-    DicFacultad,
-    DicCarrera,
-    DicEspecialidad,
-    Tesista
+    type DicFacultad,
+    type DicCarrera,
+    type DicEspecialidad,
+    type TblTesista,
+    type TblTesistaInsert
 } from '@/lib/supabase';
 
 // Obtener todas las facultades
-export async function obtenerFacultades() {
+export async function obtenerFacultades(): Promise<DicFacultad[]> {
     try {
         return await getFacultades();
     } catch (error) {
@@ -43,7 +44,7 @@ export async function obtenerEspecialidades(carreraId: number) {
 }
 
 // Verificar si un usuario es tesista
-export async function verificarEsTesista(usuarioId: number) {
+export async function verificarEsTesista(usuarioId: number): Promise<boolean> {
     try {
         return await checkIsTesista(usuarioId);
     } catch (error) {
@@ -63,7 +64,7 @@ export async function obtenerTesistaPorUsuario(usuarioId: number) {
 }
 
 // Registrar nuevo tesista
-export async function registrarTesista(tesistaData: Omit<Tesista, 'id' | 'estado'>) {
+export async function registrarTesista(tesistaData: TblTesistaInsert): Promise<TblTesista> {
     try {
         return await createTesista(tesistaData);
     } catch (error) {

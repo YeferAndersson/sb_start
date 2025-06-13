@@ -1,9 +1,10 @@
-// src/views/ServicePages/DocenteService/ProtectedDocenteService.tsx
+// src/views/ServicePages/DocenteService/ProtectedDocenteService.tsx - Corregido
 import { useEffect, useState } from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
+import { motion } from 'motion/react'
 import { useAuth } from '@/auth'
 import { getUserAvailableServices } from '@/services/ServiceAccess'
-import Loading from '@/components/shared/Loading'
+import Spinner from '@/components/ui/Spinner'
 import DocenteService from './DocenteService'
 
 const ProtectedDocenteService = () => {
@@ -22,8 +23,9 @@ const ProtectedDocenteService = () => {
 
             try {
                 const services = await getUserAvailableServices(user.id)
+                // Verificar si tiene acceso al servicio de Docente (ID = 2)
                 const hasAccess = services.some(
-                    (service) => service.servicio.id === 2 // ID del servicio Docente
+                    (userService) => userService.servicio.id === 2
                 )
                 setAccess(hasAccess)
             } catch (error) {
@@ -38,14 +40,31 @@ const ProtectedDocenteService = () => {
     }, [authenticated, user])
 
     if (loading) {
-        return <Loading loading={true} />
+        return (
+            <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="flex justify-center items-center h-screen"
+            >
+                <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+                >
+                    <Spinner size={40} />
+                </motion.div>
+            </motion.div>
+        )
     }
 
     if (!authenticated) {
         return <Navigate to="/sign-in" state={{ from: location }} />
     }
 
-    return access ? <DocenteService /> : <Navigate to="/access-denied" state={{ from: location }} />
+    if (!access) {
+        return <Navigate to="/access-denied" state={{ from: location }} />
+    }
+
+    return <DocenteService />
 }
 
 export default ProtectedDocenteService

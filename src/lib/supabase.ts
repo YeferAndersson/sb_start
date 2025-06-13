@@ -1,4 +1,4 @@
-// src/lib/supabase.ts
+// src/lib/supabase.ts - Actualizado con nueva estructura de BD
 import { createClient } from '@supabase/supabase-js'
 import type { Database } from '@/@types/database.types'
 
@@ -49,6 +49,10 @@ export type DicDisciplina = Database['public']['Tables']['dic_disciplinas']['Row
 // Tipos para docentes
 export type TblDocente = Database['public']['Tables']['tbl_docentes']['Row']
 export type TblDocenteInsert = Database['public']['Tables']['tbl_docentes']['Insert']
+
+// Tipos para integrantes de trámites
+export type TblIntegrante = Database['public']['Tables']['tbl_integrantes']['Row']
+export type TblIntegranteInsert = Database['public']['Tables']['tbl_integrantes']['Insert']
 
 // Funciones de autenticación personalizadas
 export const findUsersByDocIdentity = async (tipoDoc: string, numDoc: string) => {
@@ -223,7 +227,10 @@ export const getTesistaByUsuario = async (usuarioId: number) => {
         .eq('estado_tesista', 1)
         .single()
 
-    if (error) throw error
+    if (error) {
+        console.error('Error al obtener tesista:', error)
+        throw error
+    }
     return data
 }
 
@@ -353,6 +360,19 @@ export const getSublineasVri = async (carreraId?: number) => {
 
 // TRÁMITES - FUNCIONES PRINCIPALES
 export const getTramitesByTesista = async (tesistaId: number) => {
+    // Primero obtener los trámites donde el tesista es integrante
+    const { data: integrantes, error: integrantesError } = await supabase
+        .from('tbl_integrantes')
+        .select('id_tramite')
+        .eq('id_tesista', tesistaId)
+        .eq('estado_integrante', 1)
+
+    if (integrantesError) throw integrantesError
+
+    const tramiteIds = integrantes.map(i => i.id_tramite)
+    
+    if (tramiteIds.length === 0) return []
+
     const { data, error } = await supabase
         .from('tbl_tramites')
         .select(`
@@ -363,6 +383,7 @@ export const getTramitesByTesista = async (tesistaId: number) => {
             tipo_trabajo:id_tipo_trabajo(*),
             sublinea_vri:id_sublinea_vri(*)
         `)
+        .in('id', tramiteIds)
         .eq('estado_tramite', 1)
         .order('fecha_registro', { ascending: false })
 

@@ -1,9 +1,10 @@
-// src/views/ServicePages/TesistaService/ProtectedTesistaService.tsx
+// src/views/ServicePages/TesistaService/ProtectedTesistaService.tsx - Corregido
 import { useEffect, useState } from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
+import { motion } from 'motion/react'
 import { useAuth } from '@/auth'
 import { getUserAvailableServices } from '@/services/ServiceAccess'
-import Loading from '@/components/shared/Loading'
+import Spinner from '@/components/ui/Spinner'
 import TesistaService from './TesistaService'
 
 const ProtectedTesistaService = () => {
@@ -22,8 +23,9 @@ const ProtectedTesistaService = () => {
 
             try {
                 const services = await getUserAvailableServices(user.id)
+                // Verificar si tiene acceso al servicio de Tesista (ID = 1)
                 const hasAccess = services.some(
-                    (service) => service.servicio.id === 1 // ID del servicio Tesista
+                    (userService) => userService.servicio.id === 1
                 )
                 setAccess(hasAccess)
             } catch (error) {
@@ -38,14 +40,31 @@ const ProtectedTesistaService = () => {
     }, [authenticated, user])
 
     if (loading) {
-        return <Loading loading={true} />
+        return (
+            <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="flex justify-center items-center h-screen"
+            >
+                <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+                >
+                    <Spinner size={40} />
+                </motion.div>
+            </motion.div>
+        )
     }
 
     if (!authenticated) {
         return <Navigate to="/sign-in" state={{ from: location }} />
     }
 
-    return access ? <TesistaService /> : <Navigate to="/access-denied" state={{ from: location }} />
+    if (!access) {
+        return <Navigate to="/access-denied" state={{ from: location }} />
+    }
+
+    return <TesistaService />
 }
 
 export default ProtectedTesistaService

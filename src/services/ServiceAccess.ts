@@ -1,17 +1,22 @@
-// src/services/ServiceAccess.ts
-import { supabase, getUserServices, DicServicio, TblUsuarioServicio } from '@/lib/supabase'
+// src/services/ServiceAccess.ts - Corregido
+import { supabase, getUserServices, type DicServicio, type TblUsuarioServicio } from '@/lib/supabase'
 
-export async function getUserAvailableServices(userId: number) {
+// Tipo para el resultado de servicios de usuario con servicio anidado
+export type UsuarioServicioConServicio = TblUsuarioServicio & {
+    servicio: DicServicio
+}
+
+export async function getUserAvailableServices(userId: number): Promise<UsuarioServicioConServicio[]> {
     try {
         const services = await getUserServices(userId)
-        return services
+        return services as UsuarioServicioConServicio[]
     } catch (error) {
         console.error('Error obteniendo servicios:', error)
         throw error
     }
 }
 
-export async function getAllServices() {
+export async function getAllServices(): Promise<DicServicio[]> {
     try {
         const { data, error } = await supabase
             .from('dic_servicios')
@@ -27,10 +32,10 @@ export async function getAllServices() {
     }
 }
 
-export async function assignServiceToUser(userId: number, serviceId: number) {
+export async function assignServiceToUser(userId: number, serviceId: number): Promise<TblUsuarioServicio> {
     try {
         // Verificar si ya tiene el servicio asignado
-        const { data: existing, error: checkError } = await supabase
+        const { data: existing } = await supabase
             .from('tbl_usuarios_servicios')
             .select('id')
             .eq('id_usuario', userId)
@@ -51,16 +56,17 @@ export async function assignServiceToUser(userId: number, serviceId: number) {
                 estado: 1
             }])
             .select()
+            .single()
 
         if (error) throw error
-        return data[0]
+        return data as TblUsuarioServicio
     } catch (error) {
         console.error('Error asignando servicio:', error)
         throw error
     }
 }
 
-export async function removeServiceFromUser(userId: number, serviceId: number) {
+export async function removeServiceFromUser(userId: number, serviceId: number): Promise<TblUsuarioServicio> {
     try {
         const { data, error } = await supabase
             .from('tbl_usuarios_servicios')
@@ -68,16 +74,17 @@ export async function removeServiceFromUser(userId: number, serviceId: number) {
             .eq('id_usuario', userId)
             .eq('id_servicio', serviceId)
             .select()
+            .single()
 
         if (error) throw error
-        return data[0]
+        return data as TblUsuarioServicio
     } catch (error) {
         console.error('Error removiendo servicio:', error)
         throw error
     }
 }
 
-export async function getServiceById(serviceId: number) {
+export async function getServiceById(serviceId: number): Promise<DicServicio> {
     try {
         const { data, error } = await supabase
             .from('dic_servicios')
@@ -93,7 +100,7 @@ export async function getServiceById(serviceId: number) {
     }
 }
 
-export async function getUsersWithService(serviceId: number) {
+export async function getUsersWithService(serviceId: number): Promise<UsuarioServicioConServicio[]> {
     try {
         const { data, error } = await supabase
             .from('tbl_usuarios_servicios')
@@ -106,7 +113,7 @@ export async function getUsersWithService(serviceId: number) {
             .eq('estado', 1)
 
         if (error) throw error
-        return data
+        return data as UsuarioServicioConServicio[]
     } catch (error) {
         console.error('Error obteniendo usuarios con servicio:', error)
         throw error
