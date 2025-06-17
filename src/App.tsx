@@ -7,12 +7,6 @@ import { AuthProvider } from '@/auth'
 import { ToastProvider } from '@/components/shared/Toast/ToastProvider'
 import ErrorBoundary from '@/components/shared/ErrorBoundary/ErrorBoundary'
 import Views from '@/views'
-import appConfig from './configs/app.config'
-
-// 🔧 Importación condicional de mocks para desarrollo
-if (appConfig.enableMock) {
-    import('./mock')
-}
 
 function App() {
     return (
