@@ -274,6 +274,24 @@ export type Database = {
         }
         Relationships: []
       }
+      dic_nivel_admins: {
+        Row: {
+          descripcion: string
+          id: number
+          nombre: string
+        }
+        Insert: {
+          descripcion: string
+          id: number
+          nombre: string
+        }
+        Update: {
+          descripcion?: string
+          id?: number
+          nombre?: string
+        }
+        Relationships: []
+      }
       dic_servicios: {
         Row: {
           descripcion: string | null
@@ -427,11 +445,164 @@ export type Database = {
           },
         ]
       }
+      tbl_admins: {
+        Row: {
+          cargo: string
+          estado_admin: number
+          id: number
+          id_usuario: number
+          nivel_admin: number
+        }
+        Insert: {
+          cargo: string
+          estado_admin: number
+          id?: number
+          id_usuario: number
+          nivel_admin: number
+        }
+        Update: {
+          cargo?: string
+          estado_admin?: number
+          id?: number
+          id_usuario?: number
+          nivel_admin?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_tbl_admins_id_usuario_tbl_usuarios_id"
+            columns: ["id_usuario"]
+            isOneToOne: false
+            referencedRelation: "tbl_usuarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_tbl_admins_nivel_admin_dic_nivel_admins_id"
+            columns: ["nivel_admin"]
+            isOneToOne: false
+            referencedRelation: "dic_nivel_admins"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tbl_admins_historial: {
+        Row: {
+          cargo: string
+          detalle: string | null
+          estado_admin: number
+          fecha_cambio: string
+          id: number
+          id_admin: number
+          nivel_admin: number
+        }
+        Insert: {
+          cargo: string
+          detalle?: string | null
+          estado_admin: number
+          fecha_cambio: string
+          id?: number
+          id_admin: number
+          nivel_admin: number
+        }
+        Update: {
+          cargo?: string
+          detalle?: string | null
+          estado_admin?: number
+          fecha_cambio?: string
+          id?: number
+          id_admin?: number
+          nivel_admin?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_tbl_admins_historial_id_admin_tbl_admins_id"
+            columns: ["id_admin"]
+            isOneToOne: false
+            referencedRelation: "tbl_admins"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_tbl_admins_historial_nivel_admin_dic_nivel_admins_id"
+            columns: ["nivel_admin"]
+            isOneToOne: false
+            referencedRelation: "dic_nivel_admins"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tbl_coasesores: {
+        Row: {
+          estado_coasesor: number
+          id: number
+          id_investigador: number
+        }
+        Insert: {
+          estado_coasesor: number
+          id?: number
+          id_investigador: number
+        }
+        Update: {
+          estado_coasesor?: number
+          id?: number
+          id_investigador?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_tbl_coasesores_id_investigador_tbl_perfil_investigador_id"
+            columns: ["id_investigador"]
+            isOneToOne: false
+            referencedRelation: "tbl_perfil_investigador"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tbl_coasesores_historial: {
+        Row: {
+          detalle: string | null
+          estado_coasesor: number
+          fecha_cambio: string
+          id: number
+          id_coasesor: number
+          id_usuario_verificador: number
+        }
+        Insert: {
+          detalle?: string | null
+          estado_coasesor: number
+          fecha_cambio: string
+          id?: number
+          id_coasesor: number
+          id_usuario_verificador: number
+        }
+        Update: {
+          detalle?: string | null
+          estado_coasesor?: number
+          fecha_cambio?: string
+          id?: number
+          id_coasesor?: number
+          id_usuario_verificador?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_tbl_coasesores_historial_id_coasesor_tbl_coasesores_id"
+            columns: ["id_coasesor"]
+            isOneToOne: false
+            referencedRelation: "tbl_coasesores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_tbl_coasesores_historial_id_usuario_verificador_tbl_usuar"
+            columns: ["id_usuario_verificador"]
+            isOneToOne: false
+            referencedRelation: "tbl_usuarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tbl_conformacion_jurados: {
         Row: {
           estado: number
           fecha_asignacion: string | null
           id: number
+          id_coasesor: number | null
           id_docente: number
           id_etapa: number
           id_tramite: number
@@ -442,6 +613,7 @@ export type Database = {
           estado?: number
           fecha_asignacion?: string | null
           id?: number
+          id_coasesor?: number | null
           id_docente: number
           id_etapa: number
           id_tramite: number
@@ -452,6 +624,7 @@ export type Database = {
           estado?: number
           fecha_asignacion?: string | null
           id?: number
+          id_coasesor?: number | null
           id_docente?: number
           id_etapa?: number
           id_tramite?: number
@@ -459,6 +632,13 @@ export type Database = {
           orden?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_tbl_conformacion_jurados_id_coasesor_tbl_coasesores_id"
+            columns: ["id_coasesor"]
+            isOneToOne: false
+            referencedRelation: "tbl_coasesores"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "fk_tbl_conformacion_jurados_id_docente_tbl_docentes_id"
             columns: ["id_docente"]
@@ -801,6 +981,59 @@ export type Database = {
             columns: ["id_tramite"]
             isOneToOne: false
             referencedRelation: "tbl_tramites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tbl_perfil_investigador: {
+        Row: {
+          afiliacion: string | null
+          alternativo_scopus_id: string | null
+          codigo_renacyt: string | null
+          ctivitae: string | null
+          estado_investigador: number
+          id: number
+          id_usuario: number
+          institucion: string | null
+          nivel_renacyt: string | null
+          orcid: string | null
+          scopus_id: string | null
+          wos_id: string | null
+        }
+        Insert: {
+          afiliacion?: string | null
+          alternativo_scopus_id?: string | null
+          codigo_renacyt?: string | null
+          ctivitae?: string | null
+          estado_investigador: number
+          id?: number
+          id_usuario: number
+          institucion?: string | null
+          nivel_renacyt?: string | null
+          orcid?: string | null
+          scopus_id?: string | null
+          wos_id?: string | null
+        }
+        Update: {
+          afiliacion?: string | null
+          alternativo_scopus_id?: string | null
+          codigo_renacyt?: string | null
+          ctivitae?: string | null
+          estado_investigador?: number
+          id?: number
+          id_usuario?: number
+          institucion?: string | null
+          nivel_renacyt?: string | null
+          orcid?: string | null
+          scopus_id?: string | null
+          wos_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_tbl_perfil_investigador_id_usuario_tbl_usuarios_id"
+            columns: ["id_usuario"]
+            isOneToOne: false
+            referencedRelation: "tbl_usuarios"
             referencedColumns: ["id"]
           },
         ]
