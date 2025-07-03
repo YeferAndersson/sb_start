@@ -8,7 +8,6 @@ import {
     obtenerTramitePorId,
     obtenerEtapas
 } from '@/services/TramiteService';
-import { obtenerTesistaPorUsuario } from '@/services/TesistaService';
 import type { TblTramite, TblTesista, DicEtapa } from '@/lib/supabase';
 
 // Componentes auxiliares
@@ -29,6 +28,12 @@ import {
 import { Badge, Spinner } from '@/components/ui';
 import TesisProgress from './components/TesisProgress';
 
+import { useActiveTesistaCareer } from '@/hooks/useActiveTesistaCareer'
+import { type TesistaCareerData } from '@/services/TesistaServiceEnhanced' // ✅ AGREGAR ESTA LÍNEA
+
+import CareerSelectorModal from '@/components/shared/CareerSelectorModal/CareerSelectorModal'
+import { FaExchangeAlt, FaUniversity, FaIdCard } from 'react-icons/fa'
+
 const TesistaService = () => {
     const navigate = useNavigate();
     const { user } = useAuth();
@@ -40,18 +45,39 @@ const TesistaService = () => {
     const [etapas, setEtapas] = useState<DicEtapa[]>([]);
     const [etapaActual, setEtapaActual] = useState(1);
 
+
+    const [showCareerSelector, setShowCareerSelector] = useState(false)
+    const {
+        activeCareer,
+        availableCareers,
+        hasMultipleCareers,
+        hasCareers,
+        changeActiveCareer,
+        isLoading: careerLoading,
+        activeCareerName,
+        activeCareerCode,
+        activeFaculty
+    } = useActiveTesistaCareer()
+
     // Cargar datos del tesista y sus trámites
     useEffect(() => {
         const cargarDatos = async () => {
             try {
                 setLoading(true);
-                if (user.id) {
-                    // Obtener información del tesista
-                    const tesistaData = await obtenerTesistaPorUsuario(user.id);
+                if (user.id && activeCareer) {
+                    // ✅ Transformar TesistaCareerData al formato que espera setTesista
+                    const tesistaData = {
+                        id: activeCareer.tesistaId,
+                        codigo_estudiante: activeCareer.codigo_estudiante,
+                        id_estructura_academica: activeCareer.estructuraAcademica.id,
+                        id_usuario: user.id,
+                        estado: 1
+                    };
+
                     setTesista(tesistaData);
 
-                    // Obtener todos los trámites del tesista
-                    const tramitesData = await obtenerTramitesPorTesista(tesistaData.id);
+                    // Obtener todos los trámites del tesista usando el tesistaId de la carrera activa
+                    const tramitesData = await obtenerTramitesPorTesista(activeCareer.tesistaId);
                     setTramites(tramitesData);
 
                     // Obtener la lista completa de etapas
@@ -75,8 +101,11 @@ const TesistaService = () => {
             }
         };
 
-        cargarDatos();
-    }, [user]);
+        // ✅ Solo ejecutar si no está cargando las carreras y existe una carrera activa
+        if (!careerLoading && activeCareer) {
+            cargarDatos();
+        }
+    }, [user, activeCareer, careerLoading]);
 
     // Mensajes específicos según la etapa del trámite
     const mensajesEtapa: Record<number, { titulo: string; descripcion: string }> = {
@@ -124,13 +153,13 @@ const TesistaService = () => {
         },
         {
             label: "Estado",
-            value: tramiteActual?.estado_tramite === 1 ? "Activo" : "Pendiente",
+            value: tramiteActual?.estado_tramite === 1 ? "Activo" : tramiteActual?.estado_tramite === 0 ? "Inactivo" : "No iniciado",
             icon: <FaClipboardCheck />
         },
         {
-            label: "Código",
-            value: tramiteActual?.codigo_proyecto || "Sin asignar",
-            icon: <FaShieldAlt />
+            label: "Carrera",
+            value: activeCareerName ? activeCareerName.substring(0, 20) + (activeCareerName.length > 20 ? '...' : '') : "Sin seleccionar",
+            icon: <FaUniversity />
         }
     ];
 
@@ -241,7 +270,7 @@ const TesistaService = () => {
         }
     ];
 
-    if (loading) {
+    if (loading || careerLoading) {
         return (
             <motion.div
                 initial={{ opacity: 0 }}
@@ -257,7 +286,23 @@ const TesistaService = () => {
             </motion.div>
         );
     }
+    const handleCareerChange = (careerData: any) => {
+        setShowCareerSelector(false)
 
+        // ✅ Buscar la carrera real desde availableCareers para obtener el ID correcto
+        const realCareer = availableCareers.find(career =>
+            career.tesistaId === careerData.tesistaId &&
+            career.codigo_estudiante === careerData.codigo_estudiante
+        )
+
+        if (realCareer) {
+            // ✅ Usar los datos reales con IDs correctos
+            changeActiveCareer(realCareer)
+            console.log('🔄 Carrera cambiada a:', realCareer.estructuraAcademica.carrera.nombre)
+        } else {
+            console.error('❌ No se encontró la carrera real en availableCareers')
+        }
+    }
     return (
         <motion.div
             initial={{ opacity: 0 }}
@@ -304,16 +349,64 @@ const TesistaService = () => {
                                             Bienvenido al Sistema de Investigación y Tesis
                                         </p>
                                     </div>
-                                    <motion.div
-                                        initial={{ scale: 0 }}
-                                        animate={{ scale: 1 }}
-                                        transition={{ delay: 0.5, type: "spring" }}
-                                    >
-                                        <Badge
-                                            content={`Etapa ${etapaActual}: ${etapas.find(e => e.id === etapaActual)?.nombre || "Carga de proyecto"}`}
-                                            className="mt-2 md:mt-0"
-                                        />
-                                    </motion.div>
+
+                                    {/* Indicador de Carrera Activa */}
+                                    {hasCareers && activeCareer && (
+                                        <motion.div
+                                            initial={{ opacity: 0, scale: 0.8 }}
+                                            animate={{ opacity: 1, scale: 1 }}
+                                            transition={{ delay: 0.5 }}
+                                            className="mt-4 md:mt-0"
+                                        >
+                                            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4">
+                                                <div className="flex items-center space-x-3">
+                                                    <div className="p-2 bg-blue-100 dark:bg-blue-900/40 rounded-lg text-blue-600 dark:text-blue-400">
+                                                        <FaUniversity size={16} />
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="flex items-center space-x-2 mb-1">
+                                                            <h3 className="font-semibold text-blue-900 dark:text-blue-100 text-sm">
+                                                                Carrera Activa
+                                                            </h3>
+                                                            {hasMultipleCareers && (
+                                                                <span className="text-xs bg-blue-200 dark:bg-blue-800 text-blue-800 dark:text-blue-200 px-2 py-0.5 rounded-full">
+                                                                    {availableCareers?.length || 0} carreras
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        <p className="text-blue-800 dark:text-blue-200 text-sm font-medium truncate">
+                                                            {activeCareerName || 'Sin carrera seleccionada'}
+                                                        </p>
+                                                        <div className="flex items-center space-x-3 mt-1">
+                                                            {activeFaculty && (
+                                                                <span className="text-xs text-blue-600 dark:text-blue-400">
+                                                                    {activeFaculty}
+                                                                </span>
+                                                            )}
+                                                            {activeCareerCode && (
+                                                                <span className="text-xs text-blue-600 dark:text-blue-400 flex items-center space-x-1">
+                                                                    <FaIdCard size={10} />
+                                                                    <span>{activeCareerCode}</span>
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+
+                                                    {hasMultipleCareers && (
+                                                        <motion.button
+                                                            whileHover={{ scale: 1.05 }}
+                                                            whileTap={{ scale: 0.95 }}
+                                                            onClick={() => setShowCareerSelector(true)}
+                                                            className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/40 rounded-lg transition-colors"
+                                                            title="Cambiar carrera"
+                                                        >
+                                                            <FaExchangeAlt size={14} />
+                                                        </motion.button>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </motion.div>
+                                    )}
                                 </motion.div>
 
                                 {/* Información importante */}
@@ -388,11 +481,10 @@ const TesistaService = () => {
                                                 transition={{ delay: 0.5 + index * 0.1 }}
                                                 whileHover={{ scale: 1.05 }}
                                                 whileTap={{ scale: 0.95 }}
-                                                className={`py-2 px-4 font-medium text-sm focus:outline-none transition-colors ${
-                                                    activeTab === tab.id
-                                                        ? 'text-primary border-b-2 border-primary'
-                                                        : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
-                                                }`}
+                                                className={`py-2 px-4 font-medium text-sm focus:outline-none transition-colors ${activeTab === tab.id
+                                                    ? 'text-primary border-b-2 border-primary'
+                                                    : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                                                    }`}
                                                 onClick={() => setActiveTab(tab.id)}
                                             >
                                                 {tab.label}
@@ -610,6 +702,31 @@ const TesistaService = () => {
                         </motion.div>
                     </div>
                 </div>
+
+                {/* Modal Selector de Carrera */}
+                <CareerSelectorModal
+                    isOpen={showCareerSelector}
+                    onClose={() => setShowCareerSelector(false)}
+                    careers={availableCareers.map(career => ({
+                        id: career.id,
+                        tesistaId: career.tesistaId,
+                        codigo_estudiante: career.codigo_estudiante,
+                        carrera: {
+                            id: career.estructuraAcademica.carrera.id,
+                            // ✅ CAMBIAR ESTA LÍNEA:
+                            nombre: `${career.estructuraAcademica.carrera.nombre}${career.estructuraAcademica.especialidad?.nombre &&
+                                career.estructuraAcademica.especialidad.id !== 1
+                                ? ` - ${career.estructuraAcademica.especialidad.nombre}`
+                                : ''
+                                }${career.estructuraAcademica.sede?.nombre ? ` (${career.estructuraAcademica.sede.nombre})` : ''}`,
+                            facultad: career.estructuraAcademica.facultad ? {
+                                nombre: career.estructuraAcademica.facultad.nombre,
+                                abreviatura: career.estructuraAcademica.facultad.abreviatura
+                            } : undefined
+                        }
+                    }))}
+                    onSelectCareer={handleCareerChange}
+                />
             </Container>
         </motion.div>
     );

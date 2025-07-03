@@ -62,21 +62,18 @@ export type Database = {
           id: number
           id_facultad: number
           nombre: string
-          tiene_especialidad: number
         }
         Insert: {
           estado_carrera?: number
           id: number
           id_facultad: number
           nombre: string
-          tiene_especialidad: number
         }
         Update: {
           estado_carrera?: number
           id?: number
           id_facultad?: number
           nombre?: string
-          tiene_especialidad?: number
         }
         Relationships: [
           {
@@ -90,24 +87,24 @@ export type Database = {
       }
       dic_denominaciones: {
         Row: {
-          estado_denominacion: number
+          denominacion_actual: number
           id: number
           id_carrera: number
-          id_especialidad: number | null
+          id_especialidad: number
           nombre: string
         }
         Insert: {
-          estado_denominacion?: number
+          denominacion_actual: number
           id: number
           id_carrera: number
-          id_especialidad?: number | null
+          id_especialidad: number
           nombre: string
         }
         Update: {
-          estado_denominacion?: number
+          denominacion_actual?: number
           id?: number
           id_carrera?: number
-          id_especialidad?: number | null
+          id_especialidad?: number
           nombre?: string
         }
         Relationships: [
@@ -160,19 +157,19 @@ export type Database = {
         Row: {
           estado_especialidad: number
           id: number
-          id_carrera: number
+          id_carrera: number | null
           nombre: string
         }
         Insert: {
           estado_especialidad?: number
           id: number
-          id_carrera: number
+          id_carrera?: number | null
           nombre: string
         }
         Update: {
           estado_especialidad?: number
           id?: number
-          id_carrera?: number
+          id_carrera?: number | null
           nombre?: string
         }
         Relationships: [
@@ -208,21 +205,21 @@ export type Database = {
           abreviatura: string
           estado_facultad: number
           id: number
-          id_area: number | null
+          id_area: number
           nombre: string
         }
         Insert: {
           abreviatura: string
           estado_facultad?: number
           id: number
-          id_area?: number | null
+          id_area: number
           nombre: string
         }
         Update: {
           abreviatura?: string
           estado_facultad?: number
           id?: number
-          id_area?: number | null
+          id_area?: number
           nombre?: string
         }
         Relationships: [
@@ -292,6 +289,24 @@ export type Database = {
         }
         Relationships: []
       }
+      dic_sedes: {
+        Row: {
+          estado_sede: number | null
+          id: number
+          nombre: string
+        }
+        Insert: {
+          estado_sede?: number | null
+          id?: number
+          nombre: string
+        }
+        Update: {
+          estado_sede?: number | null
+          id?: number
+          nombre?: string
+        }
+        Relationships: []
+      }
       dic_servicios: {
         Row: {
           descripcion: string | null
@@ -338,6 +353,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      dic_tipo_archivo: {
+        Row: {
+          descripcion: string | null
+          id: number
+          nombre: string
+        }
+        Insert: {
+          descripcion?: string | null
+          id: number
+          nombre: string
+        }
+        Update: {
+          descripcion?: string | null
+          id?: number
+          nombre?: string
+        }
+        Relationships: []
       }
       dic_tipo_trabajos: {
         Row: {
@@ -394,16 +427,16 @@ export type Database = {
           id_etapa: number
           id_tramite: number
           id_usuario: number
-          mensaje: string
+          mensaje: string | null
         }
         Insert: {
-          fecha: string
+          fecha?: string
           id?: number
           id_accion: number
           id_etapa: number
           id_tramite: number
           id_usuario: number
-          mensaje: string
+          mensaje?: string | null
         }
         Update: {
           fecha?: string
@@ -412,7 +445,7 @@ export type Database = {
           id_etapa?: number
           id_tramite?: number
           id_usuario?: number
-          mensaje?: string
+          mensaje?: string | null
         }
         Relationships: [
           {
@@ -455,7 +488,7 @@ export type Database = {
         }
         Insert: {
           cargo: string
-          estado_admin: number
+          estado_admin?: number
           id?: number
           id_usuario: number
           nivel_admin: number
@@ -497,8 +530,8 @@ export type Database = {
         Insert: {
           cargo: string
           detalle?: string | null
-          estado_admin: number
-          fecha_cambio: string
+          estado_admin?: number
+          fecha_cambio?: string
           id?: number
           id_admin: number
           nivel_admin: number
@@ -529,6 +562,74 @@ export type Database = {
           },
         ]
       }
+      tbl_archivos_tramites: {
+        Row: {
+          bucket: string
+          estado_archivo: number
+          fecha: string
+          id: number
+          id_etapa: number
+          id_tipo_archivo: number
+          id_tramite: number
+          id_tramites_metadatos: number
+          nombre_archivo: string
+          storage: string
+        }
+        Insert: {
+          bucket: string
+          estado_archivo?: number
+          fecha?: string
+          id?: number
+          id_etapa: number
+          id_tipo_archivo: number
+          id_tramite: number
+          id_tramites_metadatos: number
+          nombre_archivo: string
+          storage: string
+        }
+        Update: {
+          bucket?: string
+          estado_archivo?: number
+          fecha?: string
+          id?: number
+          id_etapa?: number
+          id_tipo_archivo?: number
+          id_tramite?: number
+          id_tramites_metadatos?: number
+          nombre_archivo?: string
+          storage?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_tbl_archivos_tramites_id_etapa_dic_etapas_id"
+            columns: ["id_etapa"]
+            isOneToOne: false
+            referencedRelation: "dic_etapas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_tbl_archivos_tramites_id_tipo_archivo_dic_tipo_archivo_id"
+            columns: ["id_tipo_archivo"]
+            isOneToOne: false
+            referencedRelation: "dic_tipo_archivo"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_tbl_archivos_tramites_id_tramite_tbl_tramites_id"
+            columns: ["id_tramite"]
+            isOneToOne: false
+            referencedRelation: "tbl_tramites"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_tbl_archivos_tramites_id_tramites_metadatos_tbl_tramites_"
+            columns: ["id_tramites_metadatos"]
+            isOneToOne: false
+            referencedRelation: "tbl_tramites_metadatos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tbl_coasesores: {
         Row: {
           estado_coasesor: number
@@ -536,7 +637,7 @@ export type Database = {
           id_investigador: number
         }
         Insert: {
-          estado_coasesor: number
+          estado_coasesor?: number
           id?: number
           id_investigador: number
         }
@@ -566,8 +667,8 @@ export type Database = {
         }
         Insert: {
           detalle?: string | null
-          estado_coasesor: number
-          fecha_cambio: string
+          estado_coasesor?: number
+          fecha_cambio?: string
           id?: number
           id_coasesor: number
           id_usuario_verificador: number
@@ -599,36 +700,36 @@ export type Database = {
       }
       tbl_conformacion_jurados: {
         Row: {
-          estado: number
-          fecha_asignacion: string | null
+          estado_cj: number
+          fecha_asignacion: string
           id: number
-          id_coasesor: number | null
+          id_coasesor: number
           id_docente: number
           id_etapa: number
           id_tramite: number
-          id_usuario_asignador: number | null
+          id_usuario_asignador: number
           orden: number
         }
         Insert: {
-          estado?: number
-          fecha_asignacion?: string | null
+          estado_cj?: number
+          fecha_asignacion?: string
           id?: number
-          id_coasesor?: number | null
+          id_coasesor: number
           id_docente: number
           id_etapa: number
           id_tramite: number
-          id_usuario_asignador?: number | null
+          id_usuario_asignador: number
           orden: number
         }
         Update: {
-          estado?: number
-          fecha_asignacion?: string | null
+          estado_cj?: number
+          fecha_asignacion?: string
           id?: number
-          id_coasesor?: number | null
+          id_coasesor?: number
           id_docente?: number
           id_etapa?: number
           id_tramite?: number
-          id_usuario_asignador?: number | null
+          id_usuario_asignador?: number
           orden?: number
         }
         Relationships: [
@@ -731,8 +832,8 @@ export type Database = {
         }
         Insert: {
           comentario?: string | null
-          estado_coordinador_historial: number
-          fecha: string
+          estado_coordinador_historial?: number
+          fecha?: string
           id?: number
           id_coordinador: number
           numero_resolucion?: string | null
@@ -913,7 +1014,7 @@ export type Database = {
           fecha_registro?: string
           id?: number
           id_docente: number
-          id_estado_historial: number
+          id_estado_historial?: number
           id_sublinea_vri: number
           numero_resolucion: string
         }
@@ -935,10 +1036,69 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "fk_tbl_docentes_lineas_historial_id_sublinea_vri_tbl_sublineas_"
+            foreignKeyName: "fk_tbl_docentes_lineas_historial_id_sublinea_vri_tbl_subline"
             columns: ["id_sublinea_vri"]
             isOneToOne: false
             referencedRelation: "tbl_sublineas_vri"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tbl_estructura_academica: {
+        Row: {
+          estado_ea: number
+          id: number
+          id_carrera: number
+          id_especialidad: number
+          id_facultad: number
+          id_sede: number
+          nombre: string | null
+        }
+        Insert: {
+          estado_ea?: number
+          id: number
+          id_carrera: number
+          id_especialidad: number
+          id_facultad: number
+          id_sede: number
+          nombre?: string | null
+        }
+        Update: {
+          estado_ea?: number
+          id?: number
+          id_carrera?: number
+          id_especialidad?: number
+          id_facultad?: number
+          id_sede?: number
+          nombre?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_tbl_estructura_academica_id_carrera_dic_carreras_id"
+            columns: ["id_carrera"]
+            isOneToOne: false
+            referencedRelation: "dic_carreras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_tbl_estructura_academica_id_especialidad_dic_especialidad"
+            columns: ["id_especialidad"]
+            isOneToOne: false
+            referencedRelation: "dic_especialidades"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_tbl_estructura_academica_id_facultad_dic_facultades_id"
+            columns: ["id_facultad"]
+            isOneToOne: false
+            referencedRelation: "dic_facultades"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_tbl_estructura_academica_id_sede_dic_sedes_id"
+            columns: ["id_sede"]
+            isOneToOne: false
+            referencedRelation: "dic_sedes"
             referencedColumns: ["id"]
           },
         ]
@@ -985,6 +1145,68 @@ export type Database = {
           },
         ]
       }
+      tbl_observaciones: {
+        Row: {
+          fecha: string
+          id: number
+          id_etapa: number
+          id_rol: number
+          id_tramite: number
+          id_usuario: number
+          observacion: string | null
+          visto_bueno: number
+        }
+        Insert: {
+          fecha?: string
+          id?: number
+          id_etapa: number
+          id_rol: number
+          id_tramite: number
+          id_usuario: number
+          observacion?: string | null
+          visto_bueno: number
+        }
+        Update: {
+          fecha?: string
+          id?: number
+          id_etapa?: number
+          id_rol?: number
+          id_tramite?: number
+          id_usuario?: number
+          observacion?: string | null
+          visto_bueno?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_tbl_observaciones_id_etapa_dic_etapas_id"
+            columns: ["id_etapa"]
+            isOneToOne: false
+            referencedRelation: "dic_etapas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_tbl_observaciones_id_rol_tbl_usuarios_servicios_id"
+            columns: ["id_rol"]
+            isOneToOne: false
+            referencedRelation: "tbl_usuarios_servicios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_tbl_observaciones_id_tramite_tbl_tramites_id"
+            columns: ["id_tramite"]
+            isOneToOne: false
+            referencedRelation: "tbl_tramites"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_tbl_observaciones_id_usuario_tbl_usuarios_id"
+            columns: ["id_usuario"]
+            isOneToOne: false
+            referencedRelation: "tbl_usuarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tbl_perfil_investigador: {
         Row: {
           afiliacion: string | null
@@ -1005,7 +1227,7 @@ export type Database = {
           alternativo_scopus_id?: string | null
           codigo_renacyt?: string | null
           ctivitae?: string | null
-          estado_investigador: number
+          estado_investigador?: number
           id?: number
           id_usuario: number
           institucion?: string | null
@@ -1098,7 +1320,7 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "fk_tbl_sublineas_vri_id_linea_universidad_dic_lineas_universida"
+            foreignKeyName: "fk_tbl_sublineas_vri_id_linea_universidad_dic_lineas_univers"
             columns: ["id_linea_universidad"]
             isOneToOne: false
             referencedRelation: "dic_lineas_universidad"
@@ -1116,41 +1338,31 @@ export type Database = {
       tbl_tesistas: {
         Row: {
           codigo_estudiante: string
-          estado_tesista: number
+          estado: number
           id: number
-          id_carrera: number
-          id_especialidad: number
+          id_estructura_academica: number
           id_usuario: number
         }
         Insert: {
           codigo_estudiante: string
-          estado_tesista?: number
+          estado?: number
           id?: number
-          id_carrera: number
-          id_especialidad: number
+          id_estructura_academica: number
           id_usuario: number
         }
         Update: {
           codigo_estudiante?: string
-          estado_tesista?: number
+          estado?: number
           id?: number
-          id_carrera?: number
-          id_especialidad?: number
+          id_estructura_academica?: number
           id_usuario?: number
         }
         Relationships: [
           {
-            foreignKeyName: "fk_tbl_tesistas_id_carrera_dic_carreras_id"
-            columns: ["id_carrera"]
+            foreignKeyName: "fk_tbl_tesistas_id_estructura_academica_tbl_estructura_acade"
+            columns: ["id_estructura_academica"]
             isOneToOne: false
-            referencedRelation: "dic_carreras"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fk_tbl_tesistas_id_especialidad_dic_especialidades_id"
-            columns: ["id_especialidad"]
-            isOneToOne: false
-            referencedRelation: "dic_especialidades"
+            referencedRelation: "tbl_estructura_academica"
             referencedColumns: ["id"]
           },
           {
@@ -1239,7 +1451,7 @@ export type Database = {
       }
       tbl_tramites_historial: {
         Row: {
-          comentario: string
+          comentario: string | null
           estado_tramite_historial: number
           fecha_cambio: string
           id: number
@@ -1247,15 +1459,15 @@ export type Database = {
           id_tramite: number
         }
         Insert: {
-          comentario: string
-          estado_tramite_historial: number
-          fecha_cambio: string
+          comentario?: string | null
+          estado_tramite_historial?: number
+          fecha_cambio?: string
           id?: number
           id_etapa: number
           id_tramite: number
         }
         Update: {
-          comentario?: string
+          comentario?: string | null
           estado_tramite_historial?: number
           fecha_cambio?: string
           id?: number
@@ -1272,6 +1484,60 @@ export type Database = {
           },
           {
             foreignKeyName: "fk_tbl_tramites_historial_id_tramite_tbl_tramites_id"
+            columns: ["id_tramite"]
+            isOneToOne: false
+            referencedRelation: "tbl_tramites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tbl_tramites_metadatos: {
+        Row: {
+          abstract: string
+          conclusiones: string
+          estado_tm: number
+          fecha: string
+          id: number
+          id_etapa: number
+          id_tramite: number
+          keywords: string
+          presupuesto: number
+          titulo: string
+        }
+        Insert: {
+          abstract: string
+          conclusiones: string
+          estado_tm?: number
+          fecha?: string
+          id?: number
+          id_etapa: number
+          id_tramite: number
+          keywords: string
+          presupuesto: number
+          titulo: string
+        }
+        Update: {
+          abstract?: string
+          conclusiones?: string
+          estado_tm?: number
+          fecha?: string
+          id?: number
+          id_etapa?: number
+          id_tramite?: number
+          keywords?: string
+          presupuesto?: number
+          titulo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_tbl_tramites_metadatos_id_etapa_dic_etapas_id"
+            columns: ["id_etapa"]
+            isOneToOne: false
+            referencedRelation: "dic_etapas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_tbl_tramites_metadatos_id_tramite_tbl_tramites_id"
             columns: ["id_tramite"]
             isOneToOne: false
             referencedRelation: "tbl_tramites"
@@ -1340,37 +1606,25 @@ export type Database = {
       }
       tbl_tramitesdoc: {
         Row: {
-          conclusiones: string
           fecha_registro: string
           id: number
           id_etapa: number
           id_tramite: number
-          keywords: string
-          presupuesto: number
-          resumen: string
-          titulo: string
+          id_tramites_metadatos: number
         }
         Insert: {
-          conclusiones: string
           fecha_registro?: string
           id?: number
           id_etapa: number
           id_tramite: number
-          keywords: string
-          presupuesto: number
-          resumen: string
-          titulo: string
+          id_tramites_metadatos: number
         }
         Update: {
-          conclusiones?: string
           fecha_registro?: string
           id?: number
           id_etapa?: number
           id_tramite?: number
-          keywords?: string
-          presupuesto?: number
-          resumen?: string
-          titulo?: string
+          id_tramites_metadatos?: number
         }
         Relationships: [
           {
@@ -1385,6 +1639,13 @@ export type Database = {
             columns: ["id_tramite"]
             isOneToOne: false
             referencedRelation: "tbl_tramites"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_tbl_tramitesdoc_id_tramites_metadatos_tbl_tramites_metada"
+            columns: ["id_tramites_metadatos"]
+            isOneToOne: false
+            referencedRelation: "tbl_tramites_metadatos"
             referencedColumns: ["id"]
           },
         ]
@@ -1448,22 +1709,22 @@ export type Database = {
       }
       tbl_usuarios_servicios: {
         Row: {
-          estado: number | null
-          fecha_asignacion: string | null
+          estado: number
+          fecha_asignacion: string
           id: number
           id_servicio: number
           id_usuario: number
         }
         Insert: {
-          estado?: number | null
-          fecha_asignacion?: string | null
+          estado?: number
+          fecha_asignacion?: string
           id?: number
           id_servicio: number
           id_usuario: number
         }
         Update: {
-          estado?: number | null
-          fecha_asignacion?: string | null
+          estado?: number
+          fecha_asignacion?: string
           id?: number
           id_servicio?: number
           id_usuario?: number

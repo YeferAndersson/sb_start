@@ -42,6 +42,7 @@ function AuthProvider({ children }: AuthProviderProps) {
     const setSessionSignedIn = useSessionUser(
         (state) => state.setSessionSignedIn,
     )
+    const setUserData = useSessionUser((state) => state.setUserData)
     const { token, setToken } = useToken()
 
     const authenticated = Boolean(token && signedIn)
@@ -78,7 +79,13 @@ function AuthProvider({ children }: AuthProviderProps) {
             const resp = await apiSignIn(values)
             if (resp) {
                 handleSignIn({ accessToken: resp.token }, resp.user)
-                redirect() // Para signIn SÍ redirigir
+
+                // 🔴 AGREGAR ESTAS LÍNEAS:
+                if (resp.userData) {
+                    setUserData(resp.userData)  // ← CRÍTICO: Guardar userData en store
+                }
+
+                redirect()
                 return {
                     status: 'success',
                     message: '',
@@ -88,7 +95,6 @@ function AuthProvider({ children }: AuthProviderProps) {
                 status: 'failed',
                 message: 'Unable to sign in',
             }
-            // eslint-disable-next-line  @typescript-eslint/no-explicit-any
         } catch (errors: any) {
             return {
                 status: 'failed',
@@ -101,18 +107,18 @@ function AuthProvider({ children }: AuthProviderProps) {
     const signUp = async (values: SignUpCredential): Promise<AuthResult> => {
         try {
             console.log('🚀 AuthProvider.signUp iniciado con:', values.email)
-            
+
             const resp = await apiSignUp(values)
             console.log('📤 AuthProvider.signUp respuesta:', resp)
-            
+
             if (resp) {
                 // 🔧 CORRECCIÓN: NO establecer sesión inmediatamente
                 // NO hacer handleSignIn aquí porque el usuario necesita verificar email primero
                 // handleSignIn({ accessToken: resp.token }, resp.user)
-                
+
                 // 🔧 CORRECCIÓN: NO redirigir automáticamente
                 // redirect() 
-                
+
                 console.log('✅ AuthProvider.signUp completado sin redirección')
                 return {
                     status: 'success',
@@ -141,7 +147,7 @@ function AuthProvider({ children }: AuthProviderProps) {
             navigatorRef.current?.navigate(appConfig.unAuthenticatedEntryPath)
         }
     }
-    
+
     const oAuthSignIn = (
         callback: (payload: OauthSignInCallbackPayload) => void,
     ) => {

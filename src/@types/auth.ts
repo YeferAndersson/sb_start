@@ -62,6 +62,7 @@ export type User = {
 export type SignInResponse = {
     token: string
     user: User
+    userData?: TblUsuario
 }
 
 export type SignUpResponse = {

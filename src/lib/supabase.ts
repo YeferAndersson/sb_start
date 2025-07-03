@@ -25,9 +25,16 @@ export type DicCarrera = Database['public']['Tables']['dic_carreras']['Row']
 export type DicEspecialidad = Database['public']['Tables']['dic_especialidades']['Row']
 export type DicDenominacion = Database['public']['Tables']['dic_denominaciones']['Row']
 
-// Tipos para tesistas
+// Tipos de tablas principales para tesistas
 export type TblTesista = Database['public']['Tables']['tbl_tesistas']['Row']
 export type TblTesistaInsert = Database['public']['Tables']['tbl_tesistas']['Insert']
+export type TblTesistaUpdate = Database['public']['Tables']['tbl_tesistas']['Update']
+
+// Tipos relacionados para estructura académica
+export type TblEstructuraAcademica = Database['public']['Tables']['tbl_estructura_academica']['Row']
+export type TblEstructuraAcademicaInsert = Database['public']['Tables']['tbl_estructura_academica']['Insert']
+export type TblEstructuraAcademicaUpdate = Database['public']['Tables']['tbl_estructura_academica']['Update']
+
 
 // Tipos para trámites
 export type TblTramite = Database['public']['Tables']['tbl_tramites']['Row']
@@ -220,11 +227,17 @@ export const getTesistaByUsuario = async (usuarioId: number) => {
         .select(`
             *,
             usuario:id_usuario(*),
-            carrera:id_carrera(*),
-            especialidad:id_especialidad(*)
+            estructura_academica:id_estructura_academica(
+                id,
+                nombre,
+                carrera:id_carrera(*),
+                especialidad:id_especialidad(*),
+                facultad:id_facultad(*),
+                sede:id_sede(*)
+            )
         `)
         .eq('id_usuario', usuarioId)
-        .eq('estado_tesista', 1)
+        .eq('estado', 1)
         .single()
 
     if (error) {
@@ -239,7 +252,7 @@ export const checkIsTesista = async (usuarioId: number) => {
         .from('tbl_tesistas')
         .select('id')
         .eq('id_usuario', usuarioId)
-        .eq('estado_tesista', 1)
+        .eq('estado', 1)
 
     if (error) throw error
     return data && data.length > 0
@@ -250,7 +263,7 @@ export const createTesista = async (tesistaData: TblTesistaInsert) => {
         .from('tbl_tesistas')
         .insert([{
             ...tesistaData,
-            estado_tesista: 1
+            estado: 1
         }])
         .select()
 

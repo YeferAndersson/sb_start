@@ -43,7 +43,8 @@ export async function apiSignIn(data: SignInCredential): Promise<SignInResponse>
                 avatar: userData?.ruta_foto || '',
                 authority: [],
                 id: userData?.id
-            }
+            },
+            userData: userData  // ← ✅ AGREGAR ESTA LÍNEA
         }
     } catch (userError) {
         console.error('Error al obtener datos del usuario:', userError)
