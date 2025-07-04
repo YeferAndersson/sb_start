@@ -1384,7 +1384,7 @@ export type Database = {
           id_denominacion: number
           id_etapa: number
           id_modalidad: number
-          id_sublinea_vri: number
+          id_sublinea_vri: number | null
           id_tipo_trabajo: number
         }
         Insert: {
@@ -1396,7 +1396,7 @@ export type Database = {
           id_denominacion: number
           id_etapa: number
           id_modalidad: number
-          id_sublinea_vri: number
+          id_sublinea_vri?: number | null
           id_tipo_trabajo: number
         }
         Update: {
@@ -1408,7 +1408,7 @@ export type Database = {
           id_denominacion?: number
           id_etapa?: number
           id_modalidad?: number
-          id_sublinea_vri?: number
+          id_sublinea_vri?: number | null
           id_tipo_trabajo?: number
         }
         Relationships: [
