@@ -39,6 +39,22 @@ export interface ProyectoCreatedData {
     success: boolean
 }
 
+export interface ValidarCompaneroData {
+    codigoMatricula: string
+    dniCompanero: string
+    idEstructuraAcademica: number
+}
+
+export interface CompaneroValidado {
+    usuarioId: number
+    tesistaId: number
+    nombres: string
+    apellidos: string
+    codigoEstudiante: string
+    yaEsTesista: boolean
+}
+
+
 /**
  * Verifica si un tesista ya tiene un trámite ACTIVO
  */
@@ -461,6 +477,356 @@ export async function getTramitesCanceladosByTesista(tesistaId: number): Promise
 
     } catch (error) {
         console.error('❌ Error en getTramitesCanceladosByTesista:', error)
+        throw error
+    }
+}
+
+/**
+ * Verifica si un usuario existe en el sistema por DNI
+ */
+export async function verificarUsuarioExiste(dni: string): Promise<{ existe: boolean; usuarioId?: number; usuario?: any }> {
+    try {
+        const { data, error } = await supabase
+            .from('tbl_usuarios')
+            .select('id, nombres, apellidos, num_doc_identidad')
+            .eq('num_doc_identidad', dni)
+            .eq('estado', 1)
+            .single()
+
+        if (error && error.code !== 'PGRST116') {
+            console.error('Error verificando usuario:', error)
+            throw new Error('Error al verificar usuario en el sistema')
+        }
+
+        return {
+            existe: !!data,
+            usuarioId: data?.id,
+            usuario: data
+        }
+    } catch (error) {
+        console.error('❌ Error en verificarUsuarioExiste:', error)
+        throw error
+    }
+}
+
+/**
+ * Verifica si un usuario ya es tesista en la estructura académica
+ */
+export async function verificarTesistaExiste(usuarioId: number, idEstructuraAcademica: number): Promise<{ existe: boolean; tesistaId?: number }> {
+    try {
+        const { data, error } = await supabase
+            .from('tbl_tesistas')
+            .select('id')
+            .eq('id_usuario', usuarioId)
+            .eq('id_estructura_academica', idEstructuraAcademica)
+            .eq('estado', 1)
+            .single()
+
+        if (error && error.code !== 'PGRST116') {
+            console.error('Error verificando tesista:', error)
+            throw new Error('Error al verificar tesista')
+        }
+
+        return {
+            existe: !!data,
+            tesistaId: data?.id
+        }
+    } catch (error) {
+        console.error('❌ Error en verificarTesistaExiste:', error)
+        throw error
+    }
+}
+
+/**
+ * Crea un nuevo tesista para el compañero
+ */
+export async function crearTesistaCompanero(usuarioId: number, codigoEstudiante: string, idEstructuraAcademica: number): Promise<number> {
+    try {
+        const { data, error } = await supabase
+            .from('tbl_tesistas')
+            .insert([{
+                id_usuario: usuarioId,
+                codigo_estudiante: codigoEstudiante,
+                id_estructura_academica: idEstructuraAcademica,
+                estado: 1
+            }])
+            .select('id')
+            .single()
+
+        if (error) {
+            console.error('Error creando tesista compañero:', error)
+            throw new Error('Error al crear registro de tesista para el compañero')
+        }
+
+        console.log('✅ Tesista compañero creado con ID:', data.id)
+        return data.id
+    } catch (error) {
+        console.error('❌ Error en crearTesistaCompanero:', error)
+        throw error
+    }
+}
+
+/**
+ * Verifica si un usuario (no tesista) tiene trámite activo
+ */
+export async function checkUsuarioHasTramite(usuarioId: number): Promise<boolean> {
+    try {
+        // Obtener todos los tesistas del usuario
+        const { data: tesistas, error: tesistasError } = await supabase
+            .from('tbl_tesistas')
+            .select('id')
+            .eq('id_usuario', usuarioId)
+            .eq('estado', 1)
+
+        if (tesistasError) {
+            console.error('Error obteniendo tesistas:', tesistasError)
+            throw new Error('Error al verificar tesistas del usuario')
+        }
+
+        if (!tesistas || tesistas.length === 0) {
+            return false
+        }
+
+        // Verificar si alguno de sus tesistas tiene trámite activo
+        for (const tesista of tesistas) {
+            const tieneActivo = await checkTesistaHasTramite(tesista.id)
+            if (tieneActivo) {
+                return true
+            }
+        }
+
+        return false
+    } catch (error) {
+        console.error('❌ Error en checkUsuarioHasTramite:', error)
+        throw error
+    }
+}
+
+/**
+ * Validación completa del compañero
+ */
+export async function validarCompanero(validarData: ValidarCompaneroData): Promise<CompaneroValidado> {
+    try {
+        console.log('🔍 Iniciando validación de compañero:', validarData)
+
+        // 1. Verificar que el usuario existe en el sistema
+        const { existe, usuarioId, usuario } = await verificarUsuarioExiste(validarData.dniCompanero)
+        
+        if (!existe || !usuarioId) {
+            throw new Error('El compañero no está registrado en el sistema. Debe crear su cuenta primero.')
+        }
+
+        // 2. Validar código con Edge Function
+        const { data: edgeData, error: edgeError } = await supabase.functions.invoke('student-info', {
+            body: { studentCode: validarData.codigoMatricula }
+        })
+
+        if (edgeError || !edgeData.success) {
+            throw new Error(edgeData?.error || 'Error al verificar código de matrícula del compañero')
+        }
+
+        const studentInfo = edgeData.data
+
+        // 3. Validar que el DNI del código coincida con el DNI ingresado
+        if (studentInfo.numDocIdentidad !== validarData.dniCompanero) {
+            throw new Error(`El DNI del código de matrícula (${studentInfo.numDocIdentidad}) no coincide con el DNI ingresado (${validarData.dniCompanero})`)
+        }
+
+        // 4. Validar semestre mínimo
+        const minSemestre = studentInfo.totalSemestre - 3
+        if (studentInfo.semestreActual < minSemestre) {
+            throw new Error(`El compañero debe estar en el semestre ${minSemestre} o superior. Actualmente está en el semestre ${studentInfo.semestreActual} de ${studentInfo.totalSemestre}.`)
+        }
+
+        // ✅ AGREGAR: 4.5. Validar que el código corresponda a la misma estructura académica
+        if (studentInfo.idEstructuraAcademica !== validarData.idEstructuraAcademica) {
+            throw new Error(`El código de matrícula del compañero corresponde a una carrera diferente. Debe ingresar el código de la misma carrera que tienes registrada.`)
+        }
+
+        // 5. Verificar/crear tesista PRIMERO
+        let tesistaId: number
+        const { existe: yaEsTesista, tesistaId: existingTesistaId } = await verificarTesistaExiste(usuarioId, validarData.idEstructuraAcademica)
+        
+        if (yaEsTesista && existingTesistaId) {
+            tesistaId = existingTesistaId
+        } else {
+            // Crear nuevo tesista con la misma estructura académica
+            tesistaId = await crearTesistaCompanero(usuarioId, validarData.codigoMatricula, validarData.idEstructuraAcademica)
+        }
+
+        // 6. Verificar y agregar servicio tesista si no lo tiene
+        await verificarYAgregarServicioTesista(usuarioId)
+
+        // 7. Validar que no tenga proyecto activo EN ESTA CARRERA específica
+        const tieneProyecto = await checkTesistaHasTramite(tesistaId)
+        if (tieneProyecto) {
+            throw new Error('El compañero ya tiene un proyecto de tesis activo en esta carrera')
+        }
+
+        console.log('✅ Compañero validado exitosamente')
+
+        return {
+            usuarioId,
+            tesistaId,
+            nombres: usuario.nombres,
+            apellidos: usuario.apellidos,
+            codigoEstudiante: validarData.codigoMatricula,
+            yaEsTesista
+        }
+
+    } catch (error) {
+        console.error('❌ Error en validarCompanero:', error)
+        throw error
+    }
+}
+
+/**
+ * Agrega un compañero como integrante del proyecto
+ */
+export async function agregarCompaneroProyecto(tramiteId: number, tesistaId: number, usuarioLogueadoId: number): Promise<void> {
+    try {
+        console.log('🔗 Agregando compañero al proyecto:', { tramiteId, tesistaId })
+
+        // 1. Agregar en tbl_integrantes
+        const { error: integranteError } = await supabase
+            .from('tbl_integrantes')
+            .insert([{
+                id_tramite: tramiteId,
+                id_tesista: tesistaId,
+                tipo_integrante: 2, // Compañero
+                estado_integrante: 1
+            }])
+
+        if (integranteError) {
+            console.error('Error agregando integrante:', integranteError)
+            throw new Error('Error al agregar el compañero al proyecto')
+        }
+
+        // 2. Registrar en log de acciones
+        const { error: logError } = await supabase
+            .from('log_acciones')
+            .insert([{
+                id_tramite: tramiteId,
+                id_accion: 2, // "integrantes del proyecto"
+                id_etapa: 1,
+                id_usuario: usuarioLogueadoId,
+                mensaje: null
+            }])
+
+        if (logError) {
+            console.error('Error creando log de acción:', logError)
+            // No lanzar error por el log, es información de auditoría
+        }
+
+        console.log('✅ Compañero agregado al proyecto exitosamente')
+
+    } catch (error) {
+        console.error('❌ Error en agregarCompaneroProyecto:', error)
+        throw error
+    }
+}
+
+/**
+ * Registra que el proyecto será individual (solo un integrante)
+ */
+export async function registrarProyectoIndividual(tramiteId: number, usuarioLogueadoId: number): Promise<void> {
+    try {
+        console.log('📝 Registrando proyecto como individual:', { tramiteId })
+
+        // Registrar en log de acciones
+        const { error: logError } = await supabase
+            .from('log_acciones')
+            .insert([{
+                id_tramite: tramiteId,
+                id_accion: 2, // "integrantes del proyecto"
+                id_etapa: 1,
+                id_usuario: usuarioLogueadoId,
+                mensaje: 'Proyecto definido como individual'
+            }])
+
+        if (logError) {
+            console.error('Error creando log de acción individual:', logError)
+            throw new Error('Error al registrar proyecto individual')
+        }
+
+        console.log('✅ Proyecto individual registrado exitosamente')
+
+    } catch (error) {
+        console.error('❌ Error en registrarProyectoIndividual:', error)
+        throw error
+    }
+}
+
+/**
+ * Verifica si ya se eligió el tipo de proyecto (individual o grupal)
+ */
+export async function checkTipoProyectoElegido(tramiteId: number): Promise<boolean> {
+    try {
+        const { data, error } = await supabase
+            .from('log_acciones')
+            .select('id')
+            .eq('id_tramite', tramiteId)
+            .eq('id_accion', 2) // "integrantes del proyecto"
+            .eq('id_etapa', 1)
+            .limit(1)
+
+        if (error) {
+            console.error('Error verificando tipo proyecto:', error)
+            return false
+        }
+
+        return data && data.length > 0
+    } catch (error) {
+        console.error('❌ Error en checkTipoProyectoElegido:', error)
+        return false
+    }
+}
+
+/**
+ * Verifica y agrega servicio tesista al compañero si no lo tiene
+ */
+export async function verificarYAgregarServicioTesista(usuarioId: number): Promise<boolean> {
+    try {
+        // Verificar si ya tiene el servicio tesista
+        const { data: servicioExistente, error: servicioError } = await supabase
+            .from('tbl_usuarios_servicios')
+            .select('id')
+            .eq('id_usuario', usuarioId)
+            .eq('id_servicio', 1) // Servicio tesista
+            .eq('estado', 1)
+            .limit(1)
+
+        if (servicioError) {
+            console.error('Error verificando servicio tesista:', servicioError)
+            throw new Error('Error al verificar servicio tesista')
+        }
+
+        // Si ya tiene el servicio, no hacer nada
+        if (servicioExistente && servicioExistente.length > 0) {
+            console.log('✅ Usuario ya tiene servicio tesista')
+            return false // No se agregó porque ya lo tenía
+        }
+
+        // Agregar el servicio tesista
+        const { error: insertError } = await supabase
+            .from('tbl_usuarios_servicios')
+            .insert([{
+                id_usuario: usuarioId,
+                id_servicio: 1, // ID del servicio tesista
+                fecha_asignacion: new Date().toISOString(),
+                estado: 1
+            }])
+
+        if (insertError) {
+            console.error('Error agregando servicio tesista:', insertError)
+            throw new Error('Error al agregar el servicio de tesista')
+        }
+
+        console.log('✅ Servicio tesista agregado al compañero')
+        return true // Se agregó el servicio
+
+    } catch (error) {
+        console.error('❌ Error en verificarYAgregarServicioTesista:', error)
         throw error
     }
 }

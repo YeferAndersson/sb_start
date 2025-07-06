@@ -49,6 +49,37 @@ export const protectedRoutes: Routes = [
             footer: false,
         }
     },
+
+    {
+    key: 'pilar.pregrado.estudiantes.etapa1.tipo-proyecto',
+    path: '/pilar/pregrado/estudiantes/etapa1/tipo-proyecto',
+    component: lazy(() => import('@/views/ServicePages/TesistaService/Etapa1/TipoProyecto')),
+    authority: [],
+    meta: {
+        pageContainerType: 'contained',
+        footer: false,
+    }
+    },
+    {
+        key: 'pilar.pregrado.estudiantes.etapa1.completar',
+        path: '/pilar/pregrado/estudiantes/etapa1/completar',
+        component: lazy(() => import('@/views/ServicePages/TesistaService/Etapa1/Completar')),
+        authority: [],
+        meta: {
+            pageContainerType: 'contained',
+            footer: false,
+        }
+    },
+    {
+        key: 'pilar.pregrado.estudiantes.etapa1.resumen',
+        path: '/pilar/pregrado/estudiantes/etapa1/resumen',
+        component: lazy(() => import('@/views/ServicePages/TesistaService/Etapa1/Resumen')),
+        authority: [],
+        meta: {
+            pageContainerType: 'contained',
+            footer: false,
+        }
+    },
     ...othersRoute,
 ]
 

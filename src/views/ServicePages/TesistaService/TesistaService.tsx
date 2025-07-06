@@ -9,6 +9,7 @@ import {
     getEtapas,
     createNuevoProyecto,
     getTramitesCanceladosByTesista,
+    checkTipoProyectoElegido,
     type TramiteData,
     type CreateProyectoData
 } from '@/services/TramiteService';
@@ -69,6 +70,8 @@ const TesistaService = () => {
 
     const [tramitesCancelados, setTramitesCancelados] = useState<TramiteData[]>([]);
 
+    const [tipoProyectoElegido, setTipoProyectoElegido] = useState(false);
+
 
     // Cargar datos del tesista y sus trámites
     useEffect(() => {
@@ -90,6 +93,12 @@ const TesistaService = () => {
                             const tramiteReciente = tramitesData[0];
                             setTramiteData(tramiteReciente);
                             setEtapaActual(tramiteReciente.etapa.id);
+
+                            // ✅ AGREGAR: Verificar si ya eligió tipo de proyecto
+                            if (tramiteReciente.etapa.id === 1) {
+                                const yaEligio = await checkTipoProyectoElegido(tramiteReciente.id);
+                                setTipoProyectoElegido(yaEligio);
+                            }
                         }
                     } else {
                         // Si no tiene trámites activos, verificar si tiene cancelados
@@ -117,9 +126,11 @@ const TesistaService = () => {
     // Mensajes específicos según la etapa del trámite
     const mensajesEtapa: Record<number, { titulo: string; descripcion: string; accion?: string }> = {
         1: {
-            titulo: "Completa la información de tu proyecto",
-            descripcion: "Debes cargar los metadatos, línea de investigación, asesor y documentos requeridos.",
-            accion: "Completar Proyecto"
+            titulo: tipoProyectoElegido ? "Completa la información de tu proyecto" : "Elige el tipo de tu proyecto",
+            descripcion: tipoProyectoElegido
+                ? "Debes cargar los metadatos, línea de investigación, asesor y documentos requeridos."
+                : "Debes definir si realizarás tu proyecto de forma individual o grupal.",
+            accion: tipoProyectoElegido ? "Completar Proyecto" : "Elección de Tipo"
         },
         2: {
             titulo: "Proyecto en revisión de formato",
@@ -478,6 +489,12 @@ const TesistaService = () => {
                     const tramiteReciente = tramitesData[0];
                     setTramiteData(tramiteReciente);
                     setEtapaActual(tramiteReciente.etapa.id);
+
+                    // ✅ AGREGAR: Verificar tipo elegido en refresh
+                    if (tramiteReciente.etapa.id === 1) {
+                        const yaEligio = await checkTipoProyectoElegido(tramiteReciente.id);
+                        setTipoProyectoElegido(yaEligio);
+                    }
                 }
 
                 // Limpiar trámites cancelados si ahora tiene activos
@@ -491,6 +508,7 @@ const TesistaService = () => {
                 setTramiteData(null);
                 setTramites([]);
                 setEtapaActual(1);
+                setTipoProyectoElegido(false); // ✅ AGREGAR
             }
         } catch (error) {
             console.error('Error al refrescar datos:', error);
@@ -501,8 +519,14 @@ const TesistaService = () => {
     const handleEtapaAction = (etapa: number) => {
         switch (etapa) {
             case 1:
-                // Navegar a la página de completar proyecto
-                navigate('/pilar/pregrado/estudiantes/etapa1/completar');
+                // Verificar si ya eligió tipo de proyecto
+                if (tipoProyectoElegido) {
+                    // Ya eligió tipo, ir a completar
+                    navigate('/pilar/pregrado/estudiantes/etapa1/completar');
+                } else {
+                    // No ha elegido tipo, ir a tipo-proyecto
+                    navigate('/pilar/pregrado/estudiantes/etapa1/tipo-proyecto');
+                }
                 break;
             case 9:
                 // Navegar a iniciar borrador
@@ -1089,8 +1113,7 @@ const TesistaService = () => {
                     onContinuar={() => {
                         // Refrescar datos antes de navegar
                         refrescarDatosTramite();
-                        // Opcional: navegar a la página de completar proyecto
-                        navigate('/pilar/pregrado/estudiantes/etapa1/completar');
+                        navigate('/pilar/pregrado/estudiantes/etapa1/tipo-proyecto');
                     }}
                 />
             </Container>
