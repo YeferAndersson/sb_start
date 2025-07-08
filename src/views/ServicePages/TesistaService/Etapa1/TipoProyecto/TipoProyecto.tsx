@@ -179,10 +179,10 @@ const TipoProyecto = () => {
                         transition={{ delay: 0.1 }}
                         className="text-center mb-8"
                     >
-                        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
+                        <h1 className="text-3xl font-bold text-white mb-4">
                             Tipo de Proyecto de Tesis
                         </h1>
-                        <p className="text-gray-600 dark:text-gray-400 text-lg">
+                        <p className="text-gray-300 dark:text-gray-400 text-lg">
                             Selecciona si desarrollarás tu proyecto de forma individual o en grupo
                         </p>
                     </motion.div>

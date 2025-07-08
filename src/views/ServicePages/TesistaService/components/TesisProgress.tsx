@@ -18,24 +18,27 @@ const TesisProgress: React.FC<TesisProgressProps> = ({
 
   // Define los pasos del proceso con sus grupos correspondientes
   const pasos = [
-    // Proyecto de tesis (pasos 1-7)
+    // Proyecto de tesis (pasos 1-8)
     { id: 1, title: "Carga de proyecto", group: "Proyecto de tesis" },
     { id: 2, title: "Revisión de formato", group: "Proyecto de tesis" },
-    { id: 3, title: "Revisión del Director", group: "Proyecto de tesis" },
-    { id: 4, title: "Sorteo de jurados", group: "Proyecto de tesis" },
-    { id: 5, title: "Revisión de jurados", group: "Proyecto de tesis" },
-    { id: 6, title: "Dictamen", group: "Proyecto de tesis" },
-    { id: 7, title: "Proyecto aprobado", group: "Proyecto de tesis" },
-    // Borrador de tesis (pasos 8-15)
-    { id: 8, title: "Habilitación borrador", group: "Borrador de tesis" },
-    { id: 9, title: "Carga de borrador", group: "Borrador de tesis" },
-    { id: 10, title: "Revisión de formato", group: "Borrador de tesis" },
-    { id: 11, title: "Revisión por jurados", group: "Borrador de tesis" },
-    { id: 12, title: "Dictamen de borrador", group: "Borrador de tesis" },
-    { id: 13, title: "Sustentación", group: "Borrador de tesis" },
-    { id: 14, title: "Archivo final", group: "Borrador de tesis" },
-    { id: 15, title: "Concluido", group: "Borrador de tesis" }
-  ];
+    { id: 3, title: "Revisión del Asesor", group: "Proyecto de tesis" },
+    { id: 4, title: "Revisión subdirector", group: "Proyecto de tesis" },
+    { id: 5, title: "Sorteo de jurados", group: "Proyecto de tesis" },
+    { id: 6, title: "Revisión de jurados", group: "Proyecto de tesis" },
+    { id: 7, title: "Dictamen", group: "Proyecto de tesis" },
+    { id: 8, title: "Proyecto aprobado", group: "Proyecto de tesis" },
+    
+    // Borrador de tesis (pasos 9-17)
+    { id: 9, title: "Habilitación borrador", group: "Borrador de tesis" },
+    { id: 10, title: "Carga de borrador", group: "Borrador de tesis" },
+    { id: 11, title: "Revisión de formato", group: "Borrador de tesis" },
+    { id: 12, title: "Revisión por jurados", group: "Borrador de tesis" },
+    { id: 13, title: "Dictamen de borrador", group: "Borrador de tesis" },
+    { id: 14, title: "Preparación sustentación", group: "Borrador de tesis" },
+    { id: 15, title: "Sustentación programada", group: "Borrador de tesis" },
+    { id: 16, title: "Archivo final", group: "Borrador de tesis" },
+    { id: 17, title: "Concluido", group: "Borrador de tesis" }
+];
 
   // Animación al cargar y cuando cambia etapa
   useEffect(() => {
