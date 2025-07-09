@@ -1,4 +1,4 @@
-// src/views/Pilar/Pregrado/Estudiantes/Etapa1/TipoProyecto.tsx
+// src/views/ServicePages/TesistaService/Etapa1/Completar/TipoProyecto.tsx
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'motion/react'

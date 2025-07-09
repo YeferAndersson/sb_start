@@ -80,9 +80,13 @@ function AuthProvider({ children }: AuthProviderProps) {
             if (resp) {
                 handleSignIn({ accessToken: resp.token }, resp.user)
 
-                // 🔴 AGREGAR ESTAS LÍNEAS:
+                // ✅ ACTIVAR: Guardar userData completos en store
                 if (resp.userData) {
-                    setUserData(resp.userData)  // ← CRÍTICO: Guardar userData en store
+                    setUserData(resp.userData)
+                    console.log(
+                        '✅ UserData guardado en store:',
+                        resp.userData.uuid,
+                    )
                 }
 
                 redirect()
@@ -117,12 +121,13 @@ function AuthProvider({ children }: AuthProviderProps) {
                 // handleSignIn({ accessToken: resp.token }, resp.user)
 
                 // 🔧 CORRECCIÓN: NO redirigir automáticamente
-                // redirect() 
+                // redirect()
 
                 console.log('✅ AuthProvider.signUp completado sin redirección')
                 return {
                     status: 'success',
-                    message: 'Usuario registrado exitosamente. Verifica tu correo electrónico.',
+                    message:
+                        'Usuario registrado exitosamente. Verifica tu correo electrónico.',
                 }
             }
             return {

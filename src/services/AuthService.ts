@@ -1,4 +1,4 @@
-// src/services/AuthService.ts - CORREGIDO v2
+// src/services/AuthService.ts
 import { 
     supabase, 
     findUsersByDocIdentity, 
