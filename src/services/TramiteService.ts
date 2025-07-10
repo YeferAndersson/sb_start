@@ -54,7 +54,6 @@ export interface CompaneroValidado {
     yaEsTesista: boolean
 }
 
-
 //interfaces en el proceso de completar proyecto
 export interface SublineaVRI {
     id: number
@@ -273,13 +272,15 @@ export async function checkTesistaHasTramite(tesistaId: number): Promise<boolean
         // Verificar si tiene trámites ACTIVOS (estado_tramite = 1)
         const { data, error } = await supabase
             .from('tbl_integrantes')
-            .select(`
+            .select(
+                `
                 id,
                 tramite:id_tramite(
                     id,
                     estado_tramite
                 )
-            `)
+            `,
+            )
             .eq('id_tesista', tesistaId)
             .eq('estado_integrante', 1)
 
@@ -289,16 +290,13 @@ export async function checkTesistaHasTramite(tesistaId: number): Promise<boolean
         }
 
         // Filtrar solo trámites ACTIVOS (estado_tramite = 1)
-        const tramitesActivos = data?.filter(item => 
-            item.tramite && item.tramite.estado_tramite === 1
-        ) || []
+        const tramitesActivos = data?.filter(item => item.tramite && item.tramite.estado_tramite === 1) || []
 
         const tieneActivo = tramitesActivos.length > 0
 
         console.log(`📋 Tesista ${tesistaId} - Trámites activos: ${tramitesActivos.length}`)
-        
+
         return tieneActivo
-        
     } catch (error) {
         console.error('❌ Error en checkTesistaHasTramite:', error)
         throw error
@@ -312,10 +310,10 @@ export async function generateCodigoProyecto(codigoEstudiante: string): Promise<
     try {
         const currentYear = new Date().getFullYear().toString().slice(-2)
         const baseCode = `P${currentYear}-${codigoEstudiante}`
-        
+
         let letra = 'A'
         let codigoFinal = `${baseCode}${letra}`
-        
+
         // Verificar si el código ya existe
         while (true) {
             const { data, error } = await supabase
@@ -346,7 +344,6 @@ export async function generateCodigoProyecto(codigoEstudiante: string): Promise<
 
         console.log('✅ Código de proyecto generado:', codigoFinal)
         return codigoFinal
-
     } catch (error) {
         console.error('❌ Error en generateCodigoProyecto:', error)
         throw error
@@ -399,7 +396,7 @@ export async function createNuevoProyecto(createData: CreateProyectoData): Promi
             id_tipo_trabajo: 1,
             id_denominacion: denominacionId,
             id_sublinea_vri: null,
-            estado_tramite: 1
+            estado_tramite: 1,
         }
 
         const { data: tramite, error: tramiteError } = await supabase
@@ -416,14 +413,14 @@ export async function createNuevoProyecto(createData: CreateProyectoData): Promi
         console.log('✅ Trámite creado con ID:', tramite.id)
 
         // 4. Crear registro en tbl_integrantes
-        const { error: integranteError } = await supabase
-            .from('tbl_integrantes')
-            .insert([{
+        const { error: integranteError } = await supabase.from('tbl_integrantes').insert([
+            {
                 id_tramite: tramite.id,
                 id_tesista: createData.tesistaId,
                 tipo_integrante: 1,
-                estado_integrante: 1
-            }])
+                estado_integrante: 1,
+            },
+        ])
 
         if (integranteError) {
             console.error('Error creando integrante:', integranteError)
@@ -433,14 +430,14 @@ export async function createNuevoProyecto(createData: CreateProyectoData): Promi
         }
 
         // 5. Crear registro en historial
-        const { error: historialError } = await supabase
-            .from('tbl_tramites_historial')
-            .insert([{
+        const { error: historialError } = await supabase.from('tbl_tramites_historial').insert([
+            {
                 id_tramite: tramite.id,
                 id_etapa: 1,
                 estado_tramite_historial: 1,
-                comentario: 'Proyecto de tesis iniciado'
-            }])
+                comentario: 'Proyecto de tesis iniciado',
+            },
+        ])
 
         if (historialError) {
             console.error('Error creando historial:', historialError)
@@ -448,15 +445,15 @@ export async function createNuevoProyecto(createData: CreateProyectoData): Promi
         }
 
         // 6. Crear registro en log de acciones
-        const { error: logError } = await supabase
-            .from('log_acciones')
-            .insert([{
+        const { error: logError } = await supabase.from('log_acciones').insert([
+            {
                 id_tramite: tramite.id,
                 id_accion: 1, // "generar codigo proyecto"
                 id_etapa: 1,
                 id_usuario: createData.usuarioId,
-                mensaje: null
-            }])
+                mensaje: null,
+            },
+        ])
 
         if (logError) {
             console.error('Error creando log de acción:', logError)
@@ -466,15 +463,14 @@ export async function createNuevoProyecto(createData: CreateProyectoData): Promi
         console.log('✅ Proyecto creado exitosamente:', {
             tramiteId: tramite.id,
             codigoProyecto,
-            tesistaId: createData.tesistaId
+            tesistaId: createData.tesistaId,
         })
 
         return {
             tramiteId: tramite.id,
             codigoProyecto,
-            success: true
+            success: true,
         }
-
     } catch (error) {
         console.error('❌ Error en createNuevoProyecto:', error)
         throw error
@@ -486,10 +482,7 @@ export async function createNuevoProyecto(createData: CreateProyectoData): Promi
  */
 export async function getEtapas(): Promise<DicEtapa[]> {
     try {
-        const { data, error } = await supabase
-            .from('dic_etapas')
-            .select('*')
-            .order('id')
+        const { data, error } = await supabase.from('dic_etapas').select('*').order('id')
 
         if (error) {
             console.error('Error obteniendo etapas:', error)
@@ -529,7 +522,8 @@ export async function getTramitesByTesista(tesistaId: number): Promise<TramiteDa
         // Obtener los trámites con todas sus relaciones
         const { data, error } = await supabase
             .from('tbl_tramites')
-            .select(`
+            .select(
+                `
                 id,
                 codigo_proyecto,
                 fecha_registro,
@@ -551,7 +545,8 @@ export async function getTramitesByTesista(tesistaId: number): Promise<TramiteDa
                     id,
                     nombre
                 )
-            `)
+            `,
+            )
             .in('id', tramiteIds)
             .eq('estado_tramite', 1)
             .order('fecha_registro', { ascending: false })
@@ -572,25 +567,24 @@ export async function getTramitesByTesista(tesistaId: number): Promise<TramiteDa
                 etapa: {
                     id: item.etapa.id,
                     nombre: item.etapa.nombre,
-                    descripcion: item.etapa.descripcion
+                    descripcion: item.etapa.descripcion,
                 },
                 modalidad: {
                     id: item.modalidad.id,
-                    descripcion: item.modalidad.descripcion
+                    descripcion: item.modalidad.descripcion,
                 },
                 denominacion: {
                     id: item.denominacion.id,
-                    nombre: item.denominacion.nombre
+                    nombre: item.denominacion.nombre,
                 },
                 tipo_trabajo: {
                     id: item.tipo_trabajo.id,
-                    nombre: item.tipo_trabajo.nombre
-                }
+                    nombre: item.tipo_trabajo.nombre,
+                },
             }))
 
         console.log('📚 Trámites obtenidos:', tramites.length)
         return tramites
-
     } catch (error) {
         console.error('❌ Error en getTramitesByTesista:', error)
         throw error
@@ -623,7 +617,8 @@ export async function getTramitesCanceladosByTesista(tesistaId: number): Promise
         // Obtener solo trámites CANCELADOS (estado_tramite = 0)
         const { data, error } = await supabase
             .from('tbl_tramites')
-            .select(`
+            .select(
+                `
                 id,
                 codigo_proyecto,
                 fecha_registro,
@@ -645,7 +640,8 @@ export async function getTramitesCanceladosByTesista(tesistaId: number): Promise
                     id,
                     nombre
                 )
-            `)
+            `,
+            )
             .in('id', tramiteIds)
             .eq('estado_tramite', 0) // Solo cancelados
             .order('fecha_registro', { ascending: false })
@@ -666,25 +662,24 @@ export async function getTramitesCanceladosByTesista(tesistaId: number): Promise
                 etapa: {
                     id: item.etapa.id,
                     nombre: item.etapa.nombre,
-                    descripcion: item.etapa.descripcion
+                    descripcion: item.etapa.descripcion,
                 },
                 modalidad: {
                     id: item.modalidad.id,
-                    descripcion: item.modalidad.descripcion
+                    descripcion: item.modalidad.descripcion,
                 },
                 denominacion: {
                     id: item.denominacion.id,
-                    nombre: item.denominacion.nombre
+                    nombre: item.denominacion.nombre,
                 },
                 tipo_trabajo: {
                     id: item.tipo_trabajo.id,
-                    nombre: item.tipo_trabajo.nombre
-                }
+                    nombre: item.tipo_trabajo.nombre,
+                },
             }))
 
         console.log(`📚 Trámites cancelados obtenidos: ${tramitesCancelados.length}`)
         return tramitesCancelados
-
     } catch (error) {
         console.error('❌ Error en getTramitesCanceladosByTesista:', error)
         throw error
@@ -694,7 +689,9 @@ export async function getTramitesCanceladosByTesista(tesistaId: number): Promise
 /**
  * Verifica si un usuario existe en el sistema por DNI
  */
-export async function verificarUsuarioExiste(dni: string): Promise<{ existe: boolean; usuarioId?: number; usuario?: any }> {
+export async function verificarUsuarioExiste(
+    dni: string,
+): Promise<{ existe: boolean; usuarioId?: number; usuario?: any }> {
     try {
         const { data, error } = await supabase
             .from('tbl_usuarios')
@@ -711,7 +708,7 @@ export async function verificarUsuarioExiste(dni: string): Promise<{ existe: boo
         return {
             existe: !!data,
             usuarioId: data?.id,
-            usuario: data
+            usuario: data,
         }
     } catch (error) {
         console.error('❌ Error en verificarUsuarioExiste:', error)
@@ -722,7 +719,10 @@ export async function verificarUsuarioExiste(dni: string): Promise<{ existe: boo
 /**
  * Verifica si un usuario ya es tesista en la estructura académica
  */
-export async function verificarTesistaExiste(usuarioId: number, idEstructuraAcademica: number): Promise<{ existe: boolean; tesistaId?: number }> {
+export async function verificarTesistaExiste(
+    usuarioId: number,
+    idEstructuraAcademica: number,
+): Promise<{ existe: boolean; tesistaId?: number }> {
     try {
         const { data, error } = await supabase
             .from('tbl_tesistas')
@@ -739,7 +739,7 @@ export async function verificarTesistaExiste(usuarioId: number, idEstructuraAcad
 
         return {
             existe: !!data,
-            tesistaId: data?.id
+            tesistaId: data?.id,
         }
     } catch (error) {
         console.error('❌ Error en verificarTesistaExiste:', error)
@@ -750,16 +750,22 @@ export async function verificarTesistaExiste(usuarioId: number, idEstructuraAcad
 /**
  * Crea un nuevo tesista para el compañero
  */
-export async function crearTesistaCompanero(usuarioId: number, codigoEstudiante: string, idEstructuraAcademica: number): Promise<number> {
+export async function crearTesistaCompanero(
+    usuarioId: number,
+    codigoEstudiante: string,
+    idEstructuraAcademica: number,
+): Promise<number> {
     try {
         const { data, error } = await supabase
             .from('tbl_tesistas')
-            .insert([{
-                id_usuario: usuarioId,
-                codigo_estudiante: codigoEstudiante,
-                id_estructura_academica: idEstructuraAcademica,
-                estado: 1
-            }])
+            .insert([
+                {
+                    id_usuario: usuarioId,
+                    codigo_estudiante: codigoEstudiante,
+                    id_estructura_academica: idEstructuraAcademica,
+                    estado: 1,
+                },
+            ])
             .select('id')
             .single()
 
@@ -821,14 +827,14 @@ export async function validarCompanero(validarData: ValidarCompaneroData): Promi
 
         // 1. Verificar que el usuario existe en el sistema
         const { existe, usuarioId, usuario } = await verificarUsuarioExiste(validarData.dniCompanero)
-        
+
         if (!existe || !usuarioId) {
             throw new Error('El compañero no está registrado en el sistema. Debe crear su cuenta primero.')
         }
 
         // 2. Validar código con Edge Function
         const { data: edgeData, error: edgeError } = await supabase.functions.invoke('student-info', {
-            body: { studentCode: validarData.codigoMatricula }
+            body: { studentCode: validarData.codigoMatricula },
         })
 
         if (edgeError || !edgeData.success) {
@@ -839,29 +845,42 @@ export async function validarCompanero(validarData: ValidarCompaneroData): Promi
 
         // 3. Validar que el DNI del código coincida con el DNI ingresado
         if (studentInfo.numDocIdentidad !== validarData.dniCompanero) {
-            throw new Error(`El DNI del código de matrícula (${studentInfo.numDocIdentidad}) no coincide con el DNI ingresado (${validarData.dniCompanero})`)
+            throw new Error(
+                `El DNI del código de matrícula (${studentInfo.numDocIdentidad}) no coincide con el DNI ingresado (${validarData.dniCompanero})`,
+            )
         }
 
         // 4. Validar semestre mínimo
         const minSemestre = studentInfo.totalSemestre - 3
         if (studentInfo.semestreActual < minSemestre) {
-            throw new Error(`El compañero debe estar en el semestre ${minSemestre} o superior. Actualmente está en el semestre ${studentInfo.semestreActual} de ${studentInfo.totalSemestre}.`)
+            throw new Error(
+                `El compañero debe estar en el semestre ${minSemestre} o superior. Actualmente está en el semestre ${studentInfo.semestreActual} de ${studentInfo.totalSemestre}.`,
+            )
         }
 
         // ✅ AGREGAR: 4.5. Validar que el código corresponda a la misma estructura académica
         if (studentInfo.idEstructuraAcademica !== validarData.idEstructuraAcademica) {
-            throw new Error(`El código de matrícula del compañero corresponde a una carrera diferente. Debe ingresar el código de la misma carrera que tienes registrada.`)
+            throw new Error(
+                `El código de matrícula del compañero corresponde a una carrera diferente. Debe ingresar el código de la misma carrera que tienes registrada.`,
+            )
         }
 
         // 5. Verificar/crear tesista PRIMERO
         let tesistaId: number
-        const { existe: yaEsTesista, tesistaId: existingTesistaId } = await verificarTesistaExiste(usuarioId, validarData.idEstructuraAcademica)
-        
+        const { existe: yaEsTesista, tesistaId: existingTesistaId } = await verificarTesistaExiste(
+            usuarioId,
+            validarData.idEstructuraAcademica,
+        )
+
         if (yaEsTesista && existingTesistaId) {
             tesistaId = existingTesistaId
         } else {
             // Crear nuevo tesista con la misma estructura académica
-            tesistaId = await crearTesistaCompanero(usuarioId, validarData.codigoMatricula, validarData.idEstructuraAcademica)
+            tesistaId = await crearTesistaCompanero(
+                usuarioId,
+                validarData.codigoMatricula,
+                validarData.idEstructuraAcademica,
+            )
         }
 
         // 6. Verificar y agregar servicio tesista si no lo tiene
@@ -881,9 +900,8 @@ export async function validarCompanero(validarData: ValidarCompaneroData): Promi
             nombres: usuario.nombres,
             apellidos: usuario.apellidos,
             codigoEstudiante: validarData.codigoMatricula,
-            yaEsTesista
+            yaEsTesista,
         }
-
     } catch (error) {
         console.error('❌ Error en validarCompanero:', error)
         throw error
@@ -893,19 +911,23 @@ export async function validarCompanero(validarData: ValidarCompaneroData): Promi
 /**
  * Agrega un compañero como integrante del proyecto
  */
-export async function agregarCompaneroProyecto(tramiteId: number, tesistaId: number, usuarioLogueadoId: number): Promise<void> {
+export async function agregarCompaneroProyecto(
+    tramiteId: number,
+    tesistaId: number,
+    usuarioLogueadoId: number,
+): Promise<void> {
     try {
         console.log('🔗 Agregando compañero al proyecto:', { tramiteId, tesistaId })
 
         // 1. Agregar en tbl_integrantes
-        const { error: integranteError } = await supabase
-            .from('tbl_integrantes')
-            .insert([{
+        const { error: integranteError } = await supabase.from('tbl_integrantes').insert([
+            {
                 id_tramite: tramiteId,
                 id_tesista: tesistaId,
                 tipo_integrante: 2, // Compañero
-                estado_integrante: 1
-            }])
+                estado_integrante: 1,
+            },
+        ])
 
         if (integranteError) {
             console.error('Error agregando integrante:', integranteError)
@@ -913,15 +935,15 @@ export async function agregarCompaneroProyecto(tramiteId: number, tesistaId: num
         }
 
         // 2. Registrar en log de acciones
-        const { error: logError } = await supabase
-            .from('log_acciones')
-            .insert([{
+        const { error: logError } = await supabase.from('log_acciones').insert([
+            {
                 id_tramite: tramiteId,
                 id_accion: 2, // "integrantes del proyecto"
                 id_etapa: 1,
                 id_usuario: usuarioLogueadoId,
-                mensaje: null
-            }])
+                mensaje: null,
+            },
+        ])
 
         if (logError) {
             console.error('Error creando log de acción:', logError)
@@ -929,7 +951,6 @@ export async function agregarCompaneroProyecto(tramiteId: number, tesistaId: num
         }
 
         console.log('✅ Compañero agregado al proyecto exitosamente')
-
     } catch (error) {
         console.error('❌ Error en agregarCompaneroProyecto:', error)
         throw error
@@ -944,15 +965,15 @@ export async function registrarProyectoIndividual(tramiteId: number, usuarioLogu
         console.log('📝 Registrando proyecto como individual:', { tramiteId })
 
         // Registrar en log de acciones
-        const { error: logError } = await supabase
-            .from('log_acciones')
-            .insert([{
+        const { error: logError } = await supabase.from('log_acciones').insert([
+            {
                 id_tramite: tramiteId,
                 id_accion: 2, // "integrantes del proyecto"
                 id_etapa: 1,
                 id_usuario: usuarioLogueadoId,
-                mensaje: 'Proyecto definido como individual'
-            }])
+                mensaje: 'Proyecto definido como individual',
+            },
+        ])
 
         if (logError) {
             console.error('Error creando log de acción individual:', logError)
@@ -960,7 +981,6 @@ export async function registrarProyectoIndividual(tramiteId: number, usuarioLogu
         }
 
         console.log('✅ Proyecto individual registrado exitosamente')
-
     } catch (error) {
         console.error('❌ Error en registrarProyectoIndividual:', error)
         throw error
@@ -1018,14 +1038,14 @@ export async function verificarYAgregarServicioTesista(usuarioId: number): Promi
         }
 
         // Agregar el servicio tesista
-        const { error: insertError } = await supabase
-            .from('tbl_usuarios_servicios')
-            .insert([{
+        const { error: insertError } = await supabase.from('tbl_usuarios_servicios').insert([
+            {
                 id_usuario: usuarioId,
                 id_servicio: 1, // ID del servicio tesista
                 fecha_asignacion: new Date().toISOString(),
-                estado: 1
-            }])
+                estado: 1,
+            },
+        ])
 
         if (insertError) {
             console.error('Error agregando servicio tesista:', insertError)
@@ -1034,16 +1054,13 @@ export async function verificarYAgregarServicioTesista(usuarioId: number): Promi
 
         console.log('✅ Servicio tesista agregado al compañero')
         return true // Se agregó el servicio
-
     } catch (error) {
         console.error('❌ Error en verificarYAgregarServicioTesista:', error)
         throw error
     }
 }
 
-
 // completar informacion proyecto
-
 
 /**
  * Obtiene las sublíneas de investigación por carrera
@@ -1064,7 +1081,6 @@ export async function getSublineasByCarrera(carreraId: number): Promise<Sublinea
 
         console.log(`📚 Sublíneas obtenidas para carrera ${carreraId}:`, data.length)
         return data as SublineaVRI[]
-
     } catch (error) {
         console.error('❌ Error en getSublineasByCarrera:', error)
         throw error
@@ -1087,7 +1103,6 @@ export async function updateTramiteSublinea(tramiteId: number, sublineaId: numbe
         }
 
         console.log(`✅ Sublínea ${sublineaId} asignada al trámite ${tramiteId}`)
-
     } catch (error) {
         console.error('❌ Error en updateTramiteSublinea:', error)
         throw error
@@ -1101,7 +1116,8 @@ export async function getDocentesBySublinea(sublineaId: number): Promise<Docente
     try {
         const { data, error } = await supabase
             .from('tbl_docentes_lineas')
-            .select(`
+            .select(
+                `
                 docente:id_docente(
                     id,
                     codigo_airhs,
@@ -1117,7 +1133,8 @@ export async function getDocentesBySublinea(sublineaId: number): Promise<Docente
                         nombre
                     )
                 )
-            `)
+            `,
+            )
             .eq('id_sublinea_vri', sublineaId)
             .eq('id_estado_linea', 1)
 
@@ -1136,17 +1153,16 @@ export async function getDocentesBySublinea(sublineaId: number): Promise<Docente
                     id: item.docente.usuario.id,
                     nombres: item.docente.usuario.nombres,
                     apellidos: item.docente.usuario.apellidos,
-                    correo: item.docente.usuario.correo
+                    correo: item.docente.usuario.correo,
                 },
                 especialidad: {
                     id: item.docente.especialidad.id,
-                    nombre: item.docente.especialidad.nombre
-                }
+                    nombre: item.docente.especialidad.nombre,
+                },
             }))
 
         console.log(`👨‍🏫 Docentes obtenidos para sublínea ${sublineaId}:`, docentes.length)
         return docentes
-
     } catch (error) {
         console.error('❌ Error en getDocentesBySublinea:', error)
         throw error
@@ -1160,7 +1176,8 @@ export async function getCoasesoresActivos(): Promise<CoasesorData[]> {
     try {
         const { data, error } = await supabase
             .from('tbl_coasesores')
-            .select(`
+            .select(
+                `
                 id,
                 estado_coasesor,
                 investigador:id_investigador(
@@ -1176,7 +1193,8 @@ export async function getCoasesoresActivos(): Promise<CoasesorData[]> {
                         correo
                     )
                 )
-            `)
+            `,
+            )
             .eq('estado_coasesor', 1)
             .order('id')
 
@@ -1196,17 +1214,16 @@ export async function getCoasesoresActivos(): Promise<CoasesorData[]> {
                         id: item.investigador.usuario.id,
                         nombres: item.investigador.usuario.nombres,
                         apellidos: item.investigador.usuario.apellidos,
-                        correo: item.investigador.usuario.correo
+                        correo: item.investigador.usuario.correo,
                     },
                     orcid: item.investigador.orcid,
                     codigo_renacyt: item.investigador.codigo_renacyt,
-                    nivel_renacyt: item.investigador.nivel_renacyt
-                }
+                    nivel_renacyt: item.investigador.nivel_renacyt,
+                },
             }))
 
         console.log(`👨‍💼 Coasesores activos obtenidos:`, coasesores.length)
         return coasesores
-
     } catch (error) {
         console.error('❌ Error en getCoasesoresActivos:', error)
         throw error
@@ -1235,12 +1252,11 @@ export async function getTiposArchivosEtapa1(): Promise<TipoArchivoEtapa1[]> {
             nombre: tipo.nombre,
             descripcion: tipo.descripcion, // Mantener null si es null
             obligatorio: [1, 2, 3].includes(tipo.id), // Proyecto, Turnitin, IA son obligatorios
-            max_size: 4 // Default 4MB
+            max_size: 4, // Default 4MB
         }))
 
         console.log(`📁 Tipos de archivo para Etapa 1:`, tiposArchivo.length)
         return tiposArchivo
-
     } catch (error) {
         console.error('❌ Error en getTiposArchivosEtapa1:', error)
         throw error
@@ -1251,25 +1267,20 @@ export async function getTiposArchivosEtapa1(): Promise<TipoArchivoEtapa1[]> {
  * Asigna asesor y coasesor al proyecto
  */
 export async function assignAsesorYCoasesor(
-    tramiteId: number, 
-    asesorId: number, 
+    tramiteId: number,
+    asesorId: number,
     usuarioAsignadorId: number,
-    coasesorId?: number
+    coasesorId?: number,
 ): Promise<void> {
     try {
         console.log(`🎯 Asignando asesor ${asesorId} al trámite ${tramiteId}`)
 
         // Primero eliminar cualquier conformación previa para este trámite en etapa 1
-        await supabase
-            .from('tbl_conformacion_jurados')
-            .delete()
-            .eq('id_tramite', tramiteId)
-            .eq('id_etapa', 1)
+        await supabase.from('tbl_conformacion_jurados').delete().eq('id_tramite', tramiteId).eq('id_etapa', 1)
 
         // Insertar nuevo asesor
-        const { error: asesorError } = await supabase
-            .from('tbl_conformacion_jurados')
-            .insert([{
+        const { error: asesorError } = await supabase.from('tbl_conformacion_jurados').insert([
+            {
                 id_tramite: tramiteId,
                 id_docente: asesorId,
                 orden: 4, // Asesor principal
@@ -1277,8 +1288,9 @@ export async function assignAsesorYCoasesor(
                 id_usuario_asignador: usuarioAsignadorId,
                 id_coasesor: coasesorId || null,
                 fecha_asignacion: new Date().toISOString(),
-                estado_cj: 1
-            }])
+                estado_cj: 1,
+            },
+        ])
 
         if (asesorError) {
             console.error('Error asignando asesor:', asesorError)
@@ -1286,7 +1298,6 @@ export async function assignAsesorYCoasesor(
         }
 
         console.log(`✅ Asesor y ${coasesorId ? 'coasesor' : 'sin coasesor'} asignados exitosamente`)
-
     } catch (error) {
         console.error('❌ Error en assignAsesorYCoasesor:', error)
         throw error
@@ -1296,34 +1307,29 @@ export async function assignAsesorYCoasesor(
 /**
  * Guarda los metadatos del proyecto
  */
-export async function saveTramiteMetadatos(
-    tramiteId: number, 
-    metadatos: MetadatosFormData
-): Promise<number> {
+export async function saveTramiteMetadatos(tramiteId: number, metadatos: MetadatosFormData): Promise<number> {
     try {
         console.log(`💾 Guardando metadatos para trámite ${tramiteId}`)
 
         // Primero eliminar metadatos previos de etapa 1 si existen
-        await supabase
-            .from('tbl_tramites_metadatos')
-            .delete()
-            .eq('id_tramite', tramiteId)
-            .eq('id_etapa', 1)
+        await supabase.from('tbl_tramites_metadatos').delete().eq('id_tramite', tramiteId).eq('id_etapa', 1)
 
         // Insertar nuevos metadatos
         const { data, error } = await supabase
             .from('tbl_tramites_metadatos')
-            .insert([{
-                id_tramite: tramiteId,
-                id_etapa: 1,
-                titulo: metadatos.titulo,
-                abstract: metadatos.abstract,
-                keywords: metadatos.keywords,
-                presupuesto: metadatos.presupuesto,
-                conclusiones: null, // Explícitamente null para etapa 1
-                fecha: new Date().toISOString(),
-                estado_tm: 1
-            }])
+            .insert([
+                {
+                    id_tramite: tramiteId,
+                    id_etapa: 1,
+                    titulo: metadatos.titulo,
+                    abstract: metadatos.abstract,
+                    keywords: metadatos.keywords,
+                    presupuesto: metadatos.presupuesto,
+                    conclusiones: null, // Explícitamente null para etapa 1
+                    fecha: new Date().toISOString(),
+                    estado_tm: 1,
+                },
+            ])
             .select('id')
             .single()
 
@@ -1334,7 +1340,6 @@ export async function saveTramiteMetadatos(
 
         console.log(`✅ Metadatos guardados con ID: ${data.id}`)
         return data.id
-
     } catch (error) {
         console.error('❌ Error en saveTramiteMetadatos:', error)
         throw error
@@ -1350,7 +1355,7 @@ export async function uploadArchivoWithRename(
     tipoArchivoId: number,
     metadatosId: number,
     codigoProyecto: string,
-    userUuid: string  // ← CAMBIO: Ahora recibe UUID directamente
+    userUuid: string, // ← CAMBIO: Ahora recibe UUID directamente
 ): Promise<void> {
     try {
         console.log(`📤 Subiendo archivo tipo ${tipoArchivoId} para trámite ${tramiteId}`)
@@ -1386,19 +1391,17 @@ export async function uploadArchivoWithRename(
 
         // Generar nombre del archivo: "A1-P25-191942A.pdf"
         const nombreArchivo = `${letra}${tipoArchivoId}-${codigoProyecto}.${extension}`
-        
+
         // Ruta en storage: userUuid/nombreArchivo
         const storagePath = `${userUuid}/${nombreArchivo}`
 
         console.log(`📁 Storage path: ${storagePath}`)
 
         // Subir archivo a Supabase Storage
-        const { error: uploadError } = await supabase.storage
-            .from('tramites-documentos')
-            .upload(storagePath, file, {
-                cacheControl: '3600',
-                upsert: true
-            })
+        const { error: uploadError } = await supabase.storage.from('tramites-documentos').upload(storagePath, file, {
+            cacheControl: '3600',
+            upsert: true,
+        })
 
         if (uploadError) {
             console.error('Error subiendo archivo:', uploadError)
@@ -1408,9 +1411,8 @@ export async function uploadArchivoWithRename(
         console.log(`✅ Archivo subido a storage: ${storagePath}`)
 
         // Registrar en base de datos
-        const { error: dbError } = await supabase
-            .from('tbl_archivos_tramites')
-            .insert([{
+        const { error: dbError } = await supabase.from('tbl_archivos_tramites').insert([
+            {
                 id_tramite: tramiteId,
                 id_tipo_archivo: tipoArchivoId,
                 nombre_archivo: nombreArchivo,
@@ -1420,20 +1422,18 @@ export async function uploadArchivoWithRename(
                 id_tramites_metadatos: metadatosId,
                 fecha: new Date().toISOString(),
                 estado_archivo: 1,
-                max_size: 4 // Default 4MB
-            }])
+                max_size: 4, // Default 4MB
+            },
+        ])
 
         if (dbError) {
             console.error('Error registrando archivo en BD:', dbError)
             // Intentar limpiar archivo subido
-            await supabase.storage
-                .from('tramites-documentos')
-                .remove([storagePath])
+            await supabase.storage.from('tramites-documentos').remove([storagePath])
             throw new Error('Error al registrar el archivo en la base de datos')
         }
 
         console.log(`✅ Archivo registrado en BD: ${nombreArchivo}`)
-
     } catch (error) {
         console.error('❌ Error en uploadArchivoWithRename:', error)
         throw error
@@ -1448,10 +1448,7 @@ export async function finalizarEtapa1ToEtapa2(tramiteId: number, usuarioId: numb
         console.log(`🏁 Finalizando Etapa 1 para trámite ${tramiteId}`)
 
         // 1. Actualizar trámite a etapa 2
-        const { error: tramiteError } = await supabase
-            .from('tbl_tramites')
-            .update({ id_etapa: 2 })
-            .eq('id', tramiteId)
+        const { error: tramiteError } = await supabase.from('tbl_tramites').update({ id_etapa: 2 }).eq('id', tramiteId)
 
         if (tramiteError) {
             console.error('Error actualizando etapa del trámite:', tramiteError)
@@ -1459,15 +1456,15 @@ export async function finalizarEtapa1ToEtapa2(tramiteId: number, usuarioId: numb
         }
 
         // 2. Registrar en historial
-        const { error: historialError } = await supabase
-            .from('tbl_tramites_historial')
-            .insert([{
+        const { error: historialError } = await supabase.from('tbl_tramites_historial').insert([
+            {
                 id_tramite: tramiteId,
                 id_etapa: 2,
                 estado_tramite_historial: 1,
                 comentario: 'Etapa 1 completada - Proyecto listo para revisión de formato',
-                fecha_cambio: new Date().toISOString()
-            }])
+                fecha_cambio: new Date().toISOString(),
+            },
+        ])
 
         if (historialError) {
             console.error('Error registrando historial:', historialError)
@@ -1475,16 +1472,16 @@ export async function finalizarEtapa1ToEtapa2(tramiteId: number, usuarioId: numb
         }
 
         // 3. Registrar en log de acciones
-        const { error: logError } = await supabase
-            .from('log_acciones')
-            .insert([{
+        const { error: logError } = await supabase.from('log_acciones').insert([
+            {
                 id_tramite: tramiteId,
                 id_accion: 3, // "completar información del proyecto"
                 id_etapa: 1,
                 id_usuario: usuarioId,
                 mensaje: 'Etapa 1 completada - listo para revisión',
-                fecha: new Date().toISOString()
-            }])
+                fecha: new Date().toISOString(),
+            },
+        ])
 
         if (logError) {
             console.error('Error registrando log de acción:', logError)
@@ -1492,7 +1489,6 @@ export async function finalizarEtapa1ToEtapa2(tramiteId: number, usuarioId: numb
         }
 
         console.log(`✅ Etapa 1 finalizada exitosamente, trámite movido a Etapa 2`)
-
     } catch (error) {
         console.error('❌ Error en finalizarEtapa1ToEtapa2:', error)
         throw error
@@ -1505,8 +1501,8 @@ export async function finalizarEtapa1ToEtapa2(tramiteId: number, usuarioId: numb
 export async function completarEtapa1(
     tramiteId: number,
     codigoProyecto: string,
-    userUuid: string,  // ← CAMBIO: Ahora recibe UUID directamente
-    completarData: CompletarEtapa1Data
+    userUuid: string, // ← CAMBIO: Ahora recibe UUID directamente
+    completarData: CompletarEtapa1Data,
 ): Promise<void> {
     try {
         console.log(`🚀 Iniciando completado de Etapa 1 para trámite ${tramiteId}`)
@@ -1533,10 +1529,10 @@ export async function completarEtapa1(
 
         // 4. Asignar asesor y coasesor
         await assignAsesorYCoasesor(
-            tramiteId, 
-            completarData.asesorId, 
-            numericUserId,  // ← Usar ID numérico para relaciones BD
-            completarData.coasesorId
+            tramiteId,
+            completarData.asesorId,
+            numericUserId, // ← Usar ID numérico para relaciones BD
+            completarData.coasesorId,
         )
 
         // 5. Subir archivos
@@ -1547,15 +1543,14 @@ export async function completarEtapa1(
                 archivo.tipoId,
                 metadatosId,
                 codigoProyecto,
-                userUuid  // ← Usar UUID para storage
+                userUuid, // ← Usar UUID para storage
             )
         }
 
         // 6. Finalizar etapa
-        await finalizarEtapa1ToEtapa2(tramiteId, numericUserId)  // ← Usar ID numérico para logs
+        await finalizarEtapa1ToEtapa2(tramiteId, numericUserId) // ← Usar ID numérico para logs
 
         console.log(`🎉 Etapa 1 completada exitosamente para trámite ${tramiteId}`)
-
     } catch (error) {
         console.error('❌ Error en completarEtapa1:', error)
         throw error
@@ -1569,7 +1564,8 @@ export async function getTramiteCompleteInfo(tramiteId: number): Promise<Tramite
     try {
         const { data, error } = await supabase
             .from('tbl_tramites')
-            .select(`
+            .select(
+                `
                 id,
                 codigo_proyecto,
                 fecha_registro,
@@ -1603,7 +1599,8 @@ export async function getTramiteCompleteInfo(tramiteId: number): Promise<Tramite
                         nombre
                     )
                 )
-            `)
+            `,
+            )
             .eq('id', tramiteId)
             .single()
 
@@ -1620,34 +1617,35 @@ export async function getTramiteCompleteInfo(tramiteId: number): Promise<Tramite
             etapa: {
                 id: data.etapa.id,
                 nombre: data.etapa.nombre,
-                descripcion: data.etapa.descripcion
+                descripcion: data.etapa.descripcion,
             },
             modalidad: {
                 id: data.modalidad.id,
-                descripcion: data.modalidad.descripcion
+                descripcion: data.modalidad.descripcion,
             },
             denominacion: {
                 id: data.denominacion.id,
-                nombre: data.denominacion.nombre
+                nombre: data.denominacion.nombre,
             },
             tipo_trabajo: {
                 id: data.tipo_trabajo.id,
-                nombre: data.tipo_trabajo.nombre
+                nombre: data.tipo_trabajo.nombre,
             },
-            sublinea_vri: data.sublinea_vri ? {
-                id: data.sublinea_vri.id,
-                nombre: data.sublinea_vri.nombre,
-                linea_universidad: {
-                    id: data.sublinea_vri.linea_universidad.id,
-                    nombre: data.sublinea_vri.linea_universidad.nombre
-                },
-                area_ocde: {
-                    id: data.sublinea_vri.area_ocde.id,
-                    nombre: data.sublinea_vri.area_ocde.nombre
-                }
-            } : undefined
+            sublinea_vri: data.sublinea_vri
+                ? {
+                      id: data.sublinea_vri.id,
+                      nombre: data.sublinea_vri.nombre,
+                      linea_universidad: {
+                          id: data.sublinea_vri.linea_universidad.id,
+                          nombre: data.sublinea_vri.linea_universidad.nombre,
+                      },
+                      area_ocde: {
+                          id: data.sublinea_vri.area_ocde.id,
+                          nombre: data.sublinea_vri.area_ocde.nombre,
+                      },
+                  }
+                : undefined,
         }
-
     } catch (error) {
         console.error('❌ Error en getTramiteCompleteInfo:', error)
         throw error
@@ -1661,7 +1659,8 @@ export async function getTramiteMetadatos(tramiteId: number): Promise<TramiteMet
     try {
         const { data, error } = await supabase
             .from('tbl_tramites_metadatos')
-            .select(`
+            .select(
+                `
                 id,
                 titulo,
                 abstract,
@@ -1674,7 +1673,8 @@ export async function getTramiteMetadatos(tramiteId: number): Promise<TramiteMet
                     id,
                     nombre
                 )
-            `)
+            `,
+            )
             .eq('id_tramite', tramiteId)
             .eq('estado_tm', 1)
             .order('fecha', { ascending: false })
@@ -1701,10 +1701,9 @@ export async function getTramiteMetadatos(tramiteId: number): Promise<TramiteMet
             estado_tm: metadato.estado_tm,
             etapa: {
                 id: metadato.etapa.id,
-                nombre: metadato.etapa.nombre
-            }
+                nombre: metadato.etapa.nombre,
+            },
         }
-
     } catch (error) {
         console.error('❌ Error en getTramiteMetadatos:', error)
         return null
@@ -1718,7 +1717,8 @@ export async function getTramiteIntegrantes(tramiteId: number): Promise<Integran
     try {
         const { data, error } = await supabase
             .from('tbl_integrantes')
-            .select(`
+            .select(
+                `
                 id,
                 tipo_integrante,
                 fecha_registro,
@@ -1732,7 +1732,8 @@ export async function getTramiteIntegrantes(tramiteId: number): Promise<Integran
                         correo
                     )
                 )
-            `)
+            `,
+            )
             .eq('id_tramite', tramiteId)
             .eq('estado_integrante', 1)
             .order('tipo_integrante')
@@ -1753,11 +1754,10 @@ export async function getTramiteIntegrantes(tramiteId: number): Promise<Integran
                     id: item.tesista.usuario.id,
                     nombres: item.tesista.usuario.nombres,
                     apellidos: item.tesista.usuario.apellidos,
-                    correo: item.tesista.usuario.correo
-                }
-            }
+                    correo: item.tesista.usuario.correo,
+                },
+            },
         }))
-
     } catch (error) {
         console.error('❌ Error en getTramiteIntegrantes:', error)
         throw error
@@ -1771,7 +1771,8 @@ export async function getTramiteAsesor(tramiteId: number): Promise<AsesorInfo | 
     try {
         const { data, error } = await supabase
             .from('tbl_conformacion_jurados')
-            .select(`
+            .select(
+                `
                 id,
                 orden,
                 fecha_asignacion,
@@ -1804,7 +1805,8 @@ export async function getTramiteAsesor(tramiteId: number): Promise<AsesorInfo | 
                         )
                     )
                 )
-            `)
+            `,
+            )
             .eq('id_tramite', tramiteId)
             .eq('orden', 4) // Asesor principal
             .eq('estado_cj', 1)
@@ -1826,30 +1828,31 @@ export async function getTramiteAsesor(tramiteId: number): Promise<AsesorInfo | 
                     id: data.docente.usuario.id,
                     nombres: data.docente.usuario.nombres,
                     apellidos: data.docente.usuario.apellidos,
-                    correo: data.docente.usuario.correo
+                    correo: data.docente.usuario.correo,
                 },
                 especialidad: {
                     id: data.docente.especialidad.id,
-                    nombre: data.docente.especialidad.nombre
-                }
+                    nombre: data.docente.especialidad.nombre,
+                },
             },
-            coasesor: data.coasesor ? {
-                id: data.coasesor.id,
-                investigador: {
-                    id: data.coasesor.investigador.id,
-                    usuario: {
-                        id: data.coasesor.investigador.usuario.id,
-                        nombres: data.coasesor.investigador.usuario.nombres,
-                        apellidos: data.coasesor.investigador.usuario.apellidos,
-                        correo: data.coasesor.investigador.usuario.correo
-                    },
-                    orcid: data.coasesor.investigador.orcid,
-                    codigo_renacyt: data.coasesor.investigador.codigo_renacyt,
-                    nivel_renacyt: data.coasesor.investigador.nivel_renacyt
-                }
-            } : undefined
+            coasesor: data.coasesor
+                ? {
+                      id: data.coasesor.id,
+                      investigador: {
+                          id: data.coasesor.investigador.id,
+                          usuario: {
+                              id: data.coasesor.investigador.usuario.id,
+                              nombres: data.coasesor.investigador.usuario.nombres,
+                              apellidos: data.coasesor.investigador.usuario.apellidos,
+                              correo: data.coasesor.investigador.usuario.correo,
+                          },
+                          orcid: data.coasesor.investigador.orcid,
+                          codigo_renacyt: data.coasesor.investigador.codigo_renacyt,
+                          nivel_renacyt: data.coasesor.investigador.nivel_renacyt,
+                      },
+                  }
+                : undefined,
         }
-
     } catch (error) {
         console.error('❌ Error en getTramiteAsesor:', error)
         return null
@@ -1862,7 +1865,8 @@ export async function getTramiteArchivos(tramiteId: number): Promise<ArchivoInfo
     try {
         const { data, error } = await supabase
             .from('tbl_archivos_tramites')
-            .select(`
+            .select(
+                `
                 id,
                 nombre_archivo,
                 fecha,
@@ -1873,7 +1877,8 @@ export async function getTramiteArchivos(tramiteId: number): Promise<ArchivoInfo
                     nombre,
                     descripcion
                 )
-            `)
+            `,
+            )
             .eq('id_tramite', tramiteId)
             .eq('estado_archivo', 1)
             .order('id_tipo_archivo')
@@ -1892,10 +1897,9 @@ export async function getTramiteArchivos(tramiteId: number): Promise<ArchivoInfo
             tipo_archivo: {
                 id: item.tipo_archivo.id,
                 nombre: item.tipo_archivo.nombre,
-                descripcion: item.tipo_archivo.descripcion
-            }
+                descripcion: item.tipo_archivo.descripcion,
+            },
         }))
-
     } catch (error) {
         console.error('❌ Error en getTramiteArchivos:', error)
         throw error
@@ -1909,7 +1913,8 @@ export async function getTramiteHistorialAcciones(tramiteId: number): Promise<Lo
     try {
         const { data, error } = await supabase
             .from('log_acciones')
-            .select(`
+            .select(
+                `
                 id,
                 fecha,
                 mensaje,
@@ -1927,7 +1932,8 @@ export async function getTramiteHistorialAcciones(tramiteId: number): Promise<Lo
                     nombres,
                     apellidos
                 )
-            `)
+            `,
+            )
             .eq('id_tramite', tramiteId)
             .order('fecha', { ascending: false })
 
@@ -1943,19 +1949,18 @@ export async function getTramiteHistorialAcciones(tramiteId: number): Promise<Lo
             accion: {
                 id: item.accion.id,
                 nombre: item.accion.nombre,
-                descripcion: item.accion.descripcion
+                descripcion: item.accion.descripcion,
             },
             etapa: {
                 id: item.etapa.id,
-                nombre: item.etapa.nombre
+                nombre: item.etapa.nombre,
             },
             usuario: {
                 id: item.usuario.id,
                 nombres: item.usuario.nombres,
-                apellidos: item.usuario.apellidos
-            }
+                apellidos: item.usuario.apellidos,
+            },
         }))
-
     } catch (error) {
         console.error('❌ Error en getTramiteHistorialAcciones:', error)
         throw error
@@ -1970,20 +1975,13 @@ export async function getTramiteResumenCompleto(tramiteId: number): Promise<Tram
         console.log(`📋 Obteniendo resumen completo para trámite ${tramiteId}`)
 
         // Ejecutar todas las consultas en paralelo
-        const [
-            tramiteInfo,
-            metadatos,
-            integrantes,
-            asesor,
-            archivos,
-            historialAcciones
-        ] = await Promise.all([
+        const [tramiteInfo, metadatos, integrantes, asesor, archivos, historialAcciones] = await Promise.all([
             getTramiteCompleteInfo(tramiteId),
             getTramiteMetadatos(tramiteId),
             getTramiteIntegrantes(tramiteId),
             getTramiteAsesor(tramiteId),
             getTramiteArchivos(tramiteId),
-            getTramiteHistorialAcciones(tramiteId)
+            getTramiteHistorialAcciones(tramiteId),
         ])
 
         const resumenData: TramiteResumenData = {
@@ -1992,7 +1990,7 @@ export async function getTramiteResumenCompleto(tramiteId: number): Promise<Tram
             integrantes,
             asesor: asesor || undefined,
             archivos,
-            historialAcciones
+            historialAcciones,
         }
 
         console.log(`✅ Resumen completo obtenido:`)
@@ -2003,9 +2001,50 @@ export async function getTramiteResumenCompleto(tramiteId: number): Promise<Tram
         console.log(`  - Metadatos: ${metadatos ? 'Sí' : 'No'}`)
 
         return resumenData
-
     } catch (error) {
         console.error('❌ Error en getTramiteResumenCompleto:', error)
+        throw error
+    }
+}
+
+/**
+ * Genera URL de descarga firmada para un archivo
+ */
+export async function downloadArchiveTramite(nombreArchivo: string, userUuid: string): Promise<void> {
+    try {
+        console.log(`📥 Generando descarga para: ${nombreArchivo}`)
+
+        // Construir la ruta del archivo en storage
+        const filePath = `${userUuid}/${nombreArchivo}`
+
+        // Generar URL firmada con 1 hora de expiración
+        const { data, error } = await supabase.storage.from('tramites-documentos').createSignedUrl(filePath, 3600) // 3600 segundos = 1 hora
+
+        if (error) {
+            console.error('Error generando URL de descarga:', error)
+            throw new Error('No se pudo generar el enlace de descarga')
+        }
+
+        if (!data.signedUrl) {
+            throw new Error('No se pudo generar el enlace de descarga')
+        }
+
+        console.log(`✅ URL de descarga generada: ${data.signedUrl}`)
+
+        // Crear elemento de descarga temporal
+        const link = document.createElement('a')
+        link.href = data.signedUrl
+        link.download = nombreArchivo // Esto sugiere el nombre para la descarga
+        link.target = '_blank' // Abrir en nueva pestaña como backup
+
+        // Agregar al DOM, hacer clic y remover
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+
+        console.log(`✅ Descarga iniciada para: ${nombreArchivo}`)
+    } catch (error) {
+        console.error('❌ Error en downloadArchiveTramite:', error)
         throw error
     }
 }
