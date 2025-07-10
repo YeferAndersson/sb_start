@@ -1,5 +1,5 @@
 // src/views/auth/SignUp/components/SignUpFormStepper.tsx - CORREGIDO v2
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
@@ -16,6 +16,65 @@ import type { CommonProps } from '@/@types/common'
 import type { TblUsuario } from '@/lib/supabase'
 import { apiVerifyDocIdentity, apiCheckEmailExists } from '@/services/AuthService'
 import { PiIdentificationCardBold, PiUserBold, PiLockBold, PiAddressBookBold, PiCheckCircleBold } from 'react-icons/pi'
+
+
+
+import React from 'react'
+import { components } from 'react-select'
+import type { ControlProps, OptionProps } from 'react-select'
+import Avatar from '@/components/ui/Avatar'
+// import Select from '@/components/ui/Select'
+import { countryList } from '@/constants/countries.constant'
+
+// Definir el tipo CountryOption
+type CountryOption = {
+    label: string
+    dialCode: string
+    value: string
+}
+
+// Destructurar Control de components
+const { Control, Option } = components
+
+// Componente personalizado para opciones - Con type assertion
+const CustomSelectOption = (
+    props: OptionProps<CountryOption> & { variant: 'country' | 'phone' },
+) => {
+    const OptionComponent = Option as any
+    return (
+        <OptionComponent {...props}>
+            <div className="flex items-center gap-2">
+                <Avatar
+                    shape="circle"
+                    size={20}
+                    src={`/img/countries/${props.data.value}.png`}
+                />
+                {props.variant === 'country' && <span>{props.data.label}</span>}
+                {props.variant === 'phone' && <span>{props.data.dialCode}</span>}
+            </div>
+        </OptionComponent>
+    )
+}
+
+// Componente personalizado para control - Con type assertion
+const CustomControl = ({ children, ...props }: ControlProps<CountryOption>) => {
+    const ControlComponent = Control as any
+    const selected = props.getValue()[0]
+    return (
+        <ControlComponent {...props}>
+            {selected && (
+                <Avatar
+                    className="ltr:ml-4 rtl:mr-4"
+                    shape="circle"
+                    size={20}
+                    src={`/img/countries/${selected.value}.png`}
+                />
+            )}
+            {children}
+        </ControlComponent>
+    )
+}
+
 
 interface SignUpFormStepperProps extends CommonProps {
     disableSubmit?: boolean
@@ -69,6 +128,7 @@ type PersonalInfoSchema = {
     direccion: string
     sexo: string
     telefono: string
+    dialCode: string
 }
 
 // Schemas de validación
@@ -93,7 +153,8 @@ const personalSchema: ZodType<PersonalInfoSchema> = z.object({
     pais: z.string().min(1, { message: 'El país es requerido' }).max(3, { message: 'El país debe tener máximo 3 caracteres (ej: PER)' }),
     direccion: z.string().min(1, { message: 'La dirección es requerida' }),
     sexo: z.string().min(1, { message: 'Seleccione su sexo' }),
-    telefono: z.string().min(9, { message: 'Ingrese un número de teléfono válido' })
+    telefono: z.string().min(9, { message: 'Ingrese un número de teléfono válido' }),
+    dialCode: z.string().min(1, { message: 'Seleccione código de país' }) 
 })
 
 // Opciones
@@ -136,7 +197,15 @@ const SignUpFormStepper = (props: SignUpFormStepperProps) => {
     })
 
     const { signUp } = useAuth()
-
+const dialCodeList = useMemo(() => {
+    const newCountryList: Array<CountryOption> = JSON.parse(
+        JSON.stringify(countryList)
+    )
+    return newCountryList.map((country) => {
+        country.label = country.dialCode
+        return country
+    })
+}, [])
     // Formularios para cada step
     const documentForm = useForm<DocumentVerificationSchema>({
         resolver: zodResolver(documentSchema),
@@ -148,9 +217,9 @@ const SignUpFormStepper = (props: SignUpFormStepperProps) => {
     })
 
     const personalForm = useForm<PersonalInfoSchema>({
-        resolver: zodResolver(personalSchema),
-        defaultValues: { pais: 'PER', sexo: 'M' }
-    })
+    resolver: zodResolver(personalSchema),
+    defaultValues: { pais: 'PE', sexo: 'M', dialCode: '+51' }  //
+})
 
     // Función para mostrar error modal
     const showError = (title: string, message: string) => {
@@ -259,7 +328,8 @@ const SignUpFormStepper = (props: SignUpFormStepperProps) => {
             console.log('📝 Iniciando registro final...')
             console.log('📋 Tipo de usuario:', isNewUser ? 'NUEVO' : 'EXISTENTE')
             console.log('📋 Usuario seleccionado ID:', selectedUser?.id)
-            
+            const telefonoCompleto = values.dialCode + values.telefono
+            console.log('📞 Teléfono completo:', telefonoCompleto)
             // 🔧 CORRECCIÓN: Evitar redirección automática
             // No usar await directamente aquí para evitar que useAuth redirija
             const signUpPromise = signUp({
@@ -273,7 +343,7 @@ const SignUpFormStepper = (props: SignUpFormStepperProps) => {
                     pais: values.pais,
                     direccion: values.direccion,
                     sexo: values.sexo,
-                    telefono: values.telefono,
+                    telefono: telefonoCompleto,
                     fechaNacimiento: new Date()
                 } : {
                     existingUserId: selectedUser?.id
@@ -575,23 +645,34 @@ const SignUpFormStepper = (props: SignUpFormStepperProps) => {
 
                         <Form onSubmit={personalForm.handleSubmit(handlePersonalInfo)}>
                             <FormItem
-                                label="País (código de 3 letras)"
-                                invalid={Boolean(personalForm.formState.errors.pais)}
-                                errorMessage={personalForm.formState.errors.pais?.message}
-                            >
-                                <Controller
-                                    name="pais"
-                                    control={personalForm.control}
-                                    render={({ field }) => (
-                                        <Input
-                                            type="text"
-                                            placeholder="PER"
-                                            maxLength={3}
-                                            {...field}
-                                        />
-                                    )}
-                                />
-                            </FormItem>
+    label="País"
+    invalid={Boolean(personalForm.formState.errors.pais)}
+    errorMessage={personalForm.formState.errors.pais?.message}
+>
+    <Controller
+        name="pais"
+        control={personalForm.control}
+        render={({ field }) => (
+            <Select<CountryOption>
+                options={countryList}
+                components={{
+                    Option: (props) => (
+                        <CustomSelectOption
+                            variant="country"
+                            {...(props as OptionProps<CountryOption>)}
+                        />
+                    ),
+                    Control: CustomControl,
+                }}
+                placeholder="Seleccione su país"
+                value={field.value ? countryList.find(
+                    (option) => option.value === field.value
+                ) : null}
+                onChange={(option) => field.onChange(option?.value)}
+            />
+        )}
+    />
+</FormItem>
                             
                             <FormItem
                                 label="Dirección"
@@ -611,44 +692,83 @@ const SignUpFormStepper = (props: SignUpFormStepperProps) => {
                                 />
                             </FormItem>
                             
-                            <div className="grid grid-cols-2 gap-4">
-                                <FormItem
-                                    label="Sexo"
-                                    invalid={Boolean(personalForm.formState.errors.sexo)}
-                                    errorMessage={personalForm.formState.errors.sexo?.message}
-                                >
-                                    <Controller
-                                        name="sexo"
-                                        control={personalForm.control}
-                                        render={({ field }) => (
-                                            <Select
-                                                placeholder="Seleccione"
-                                                options={sexoOptions}
-                                                value={sexoOptions.find(option => option.value === field.value)}
-                                                onChange={option => field.onChange(option?.value)}
-                                            />
-                                        )}
-                                    />
-                                </FormItem>
-                                
-                                <FormItem
-                                    label="Teléfono"
-                                    invalid={Boolean(personalForm.formState.errors.telefono)}
-                                    errorMessage={personalForm.formState.errors.telefono?.message}
-                                >
-                                    <Controller
-                                        name="telefono"
-                                        control={personalForm.control}
-                                        render={({ field }) => (
-                                            <Input
-                                                type="tel"
-                                                placeholder="Número de teléfono"
-                                                {...field}
-                                            />
-                                        )}
-                                    />
-                                </FormItem>
-                            </div>
+                            <FormItem
+    label="Sexo"
+    invalid={Boolean(personalForm.formState.errors.sexo)}
+    errorMessage={personalForm.formState.errors.sexo?.message}
+>
+    <Controller
+        name="sexo"
+        control={personalForm.control}
+        render={({ field }) => (
+            <Select
+                placeholder="Seleccione"
+                options={sexoOptions}
+                value={sexoOptions.find(option => option.value === field.value)}
+                onChange={option => field.onChange(option?.value)}
+            />
+        )}
+    />
+</FormItem>
+
+<div className="flex items-end gap-4 w-full">
+    <FormItem
+        invalid={
+            Boolean(personalForm.formState.errors.telefono) ||
+            Boolean(personalForm.formState.errors.dialCode)
+        }
+    >
+        <label className="form-label mb-2">Número de teléfono</label>
+        <Controller
+            name="dialCode"
+            control={personalForm.control}
+            render={({ field }) => (
+                <Select<CountryOption>
+                    options={dialCodeList}
+                    className="w-[150px]"
+                    menuPlacement="top"
+                    components={{
+                        Option: (props) => (
+                            <CustomSelectOption
+                                variant="phone"
+                                {...(props as OptionProps<CountryOption>)}
+                            />
+                        ),
+                        Control: CustomControl,
+                    }}
+                    placeholder=""
+                    value={dialCodeList.find(
+                        (option) => option.dialCode === field.value
+                    ) || null}
+                    onChange={(option) =>
+                        field.onChange(option?.dialCode)
+                    }
+                />
+            )}
+        />
+    </FormItem>
+    <FormItem
+        className="w-full"
+        invalid={
+            Boolean(personalForm.formState.errors.telefono) ||
+            Boolean(personalForm.formState.errors.dialCode)
+        }
+        errorMessage={personalForm.formState.errors.telefono?.message}
+    >
+        <Controller
+            name="telefono"
+            control={personalForm.control}
+            render={({ field }) => (
+                <Input
+                    type="tel"
+                    autoComplete="off"
+                    placeholder="Número de teléfono"
+                    {...field}
+                />
+            )}
+        />
+    </FormItem>
+</div>
                             
                             <div className="flex gap-3 mt-6">
                                 <Button

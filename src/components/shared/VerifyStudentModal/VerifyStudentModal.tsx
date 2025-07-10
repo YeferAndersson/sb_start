@@ -12,6 +12,8 @@ import { z } from 'zod'
 import { FaUserGraduate, FaTimes, FaCheck, FaExclamationTriangle } from 'react-icons/fa'
 import { supabase } from '@/lib/supabase'
 import { useSessionUser } from '@/store/authStore'
+import toast from '@/components/ui/toast'
+import Notification from '@/components/ui/Notification'
 
 interface VerifyStudentModalProps {
     isOpen: boolean
@@ -158,7 +160,15 @@ const VerifyStudentModal = ({ isOpen, onClose, onSuccess }: VerifyStudentModalPr
             handleClose()
         }
     }
+    const toastNotification = (
+        <Notification title="¡Felicitaciones!" type='success'>
+            ¡Servicio de tesista agregado exitosamente!
+        </Notification>
+    )
 
+    function openNotification() {
+        toast.push(toastNotification)
+    }
     return (
         <Dialog isOpen={isOpen} onClose={handleClose} closable={false}>
             <motion.div
@@ -341,7 +351,7 @@ const VerifyStudentModal = ({ isOpen, onClose, onSuccess }: VerifyStudentModalPr
                                 <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                                     <Button
                                         variant="solid"
-                                        onClick={handleConfirm}
+                                        onClick={() => { handleConfirm(); openNotification(); }}
                                         className="bg-green-600 hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-700"
                                     >
                                         Agregar Servicio

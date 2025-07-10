@@ -33,7 +33,10 @@ import {
     FaExternalLinkAlt,
     FaArrowLeft,
     FaChevronDown,
-    FaChevronUp
+    FaChevronUp,
+    FaPlay,
+    FaPause,
+    FaCheck
 } from 'react-icons/fa'
 import { Spinner } from '@/components/ui'
 
@@ -65,7 +68,6 @@ const Resumen = () => {
             try {
                 setLoading(true)
 
-                // Obtener trámite actual
                 const tramites = await getTramitesByTesista(activeCareer.tesistaId)
                 if (tramites.length === 0) {
                     navigate('/servicio/tesista')
@@ -75,7 +77,6 @@ const Resumen = () => {
                 const tramite = tramites[0]
                 setTramiteActual(tramite)
 
-                // Obtener resumen completo
                 const resumen = await getTramiteResumenCompleto(tramite.id)
                 setResumenData(resumen)
 
@@ -118,9 +119,9 @@ const Resumen = () => {
 
     const getEstadoColor = (estado: number) => {
         switch (estado) {
-            case 1: return 'text-green-600 bg-green-100 dark:bg-green-900/40 dark:text-green-400'
-            case 0: return 'text-red-600 bg-red-100 dark:bg-red-900/40 dark:text-red-400'
-            default: return 'text-gray-600 bg-gray-100 dark:bg-gray-700 dark:text-gray-400'
+            case 1: return 'text-green-600 bg-green-100 dark:bg-green-900 dark:text-green-400'
+            case 0: return 'text-red-600 bg-red-100 dark:bg-red-900 dark:text-red-400'
+            default: return 'text-gray-600 bg-gray-100 dark:bg-gray-700 dark:text-gray-300'
         }
     }
 
@@ -134,126 +135,165 @@ const Resumen = () => {
 
     if (loading || careerLoading) {
         return (
-            <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="flex justify-center items-center h-screen"
-            >
-                <Spinner size={40} />
-            </motion.div>
+            <div className="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100 dark:bg-gradient-to-br dark:from-gray-900 dark:to-gray-800 flex items-center justify-center">
+                <div className="text-center">
+                    <Spinner size={40} />
+                    <p className="mt-4 text-gray-600 dark:text-gray-300 font-medium">Cargando información...</p>
+                </div>
+            </div>
         )
     }
 
     if (!tramiteActual || !resumenData) {
         return (
-            <Container>
-                <div className="text-center py-12">
-                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-                        No se encontró información del proyecto
-                    </h1>
-                    <button
-                        onClick={() => navigate('/servicio/tesista')}
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg"
+            <div className="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100 dark:bg-gradient-to-br dark:from-gray-900 dark:to-gray-800 flex items-center justify-center">
+                <Container>
+                    <motion.div 
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="max-w-md mx-auto text-center"
                     >
-                        Volver al Panel
-                    </button>
-                </div>
-            </Container>
+                        <div className="bg-white dark:bg-gray-800 backdrop-blur-lg rounded-2xl border border-gray-200 dark:border-gray-700 shadow-xl p-8">
+                            <div className="w-16 h-16 bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center mx-auto mb-6">
+                                <FaExternalLinkAlt className="text-red-600 dark:text-red-400" size={24} />
+                            </div>
+                            <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-3">
+                                No se encontró información del proyecto
+                            </h1>
+                            <p className="text-gray-600 dark:text-gray-300 mb-6">
+                                No se pudo cargar la información del proyecto
+                            </p>
+                            <button
+                                onClick={() => navigate('/servicio/tesista')}
+                                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg font-medium transition-all duration-200 hover:shadow-lg"
+                            >
+                                Volver al Panel
+                            </button>
+                        </div>
+                    </motion.div>
+                </Container>
+            </div>
         )
     }
 
     const { tramite, metadatos, integrantes, asesor, archivos, historialAcciones } = resumenData
 
     return (
-        <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.6 }}
-        >
-            <Container>
-                <div className="max-w-6xl mx-auto">
-                    {/* Header */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.1 }}
-                        className="text-center mb-8"
+        
+        
+        <div >
+            {/* Header fuera del container */}
+            <motion.div
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className=" mb-8 "
+            >
+                {/* Breadcrumb */}
+                <div className="flex items-center space-x-2 text-sm text-gray-300 mb-6">
+                    <button 
+                        onClick={() => navigate('/servicio/tesista')}
+                        className="flex items-center space-x-1 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                     >
-                        <h1 className="text-3xl font-bold text-white mb-4">
-                            Resumen del Proyecto de Tesis
-                        </h1>
-                        <p className="text-gray-300 dark:text-gray-400 text-lg">
-                            Información completa y estado actual de tu proyecto
-                        </p>
-                    </motion.div>
+                        <FaArrowLeft size={12} />
+                        <span>Panel Principal</span>
+                    </button>
+                    <span>•</span>
+                    <span>Resumen del Proyecto</span>
+                </div>
 
+                {/* Title */}
+                <h1 className="text-3xl font-bold text-gray-100 mb-4">
+                    Resumen del Proyecto de Tesis
+                </h1>
+                <p className="text-lg text-gray-300">
+                    Información completa y estado actual de tu proyecto
+                </p>
+            </motion.div>
+
+            <Container className="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100 dark:bg-gradient-to-br dark:from-gray-900 dark:to-gray-800 rounded-3xl m-4">
+                <div className="max-w-6xl mx-auto py-8">
                     {/* Project Header Card */}
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.2 }}
-                        className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-3xl shadow-xl p-8 mb-8 text-white"
+                        transition={{ delay: 0.1 }}
+                        className="bg-white dark:bg-gray-800 backdrop-blur-lg rounded-2xl border border-gray-200 dark:border-gray-700 shadow-xl p-8 mb-8"
                     >
-                        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
-                            <div className="flex-1">
-                                <div className="flex items-center space-x-3 mb-4">
-                                    <FaRocket size={32} />
+                        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-center">
+                            {/* Información principal */}
+                            <div className="lg:col-span-3">
+                                <div className="flex items-center space-x-4 mb-4">
+                                    <div className="w-12 h-12 bg-blue-50 dark:bg-blue-900 rounded-xl flex items-center justify-center">
+                                        <FaRocket className="text-blue-600 dark:text-blue-400" size={20} />
+                                    </div>
                                     <div>
-                                        <h2 className="text-2xl font-bold">{tramite.codigo_proyecto}</h2>
-                                        <p className="text-blue-100">{activeCareerName}</p>
+                                        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                                            {tramite.codigo_proyecto}
+                                        </h2>
+                                        <p className="text-gray-600 dark:text-gray-300">{activeCareerName}</p>
                                     </div>
                                 </div>
+                                
                                 {metadatos && (
-                                    <h3 className="text-xl font-semibold mb-2 text-blue-50">
+                                    <h3 className="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-200">
                                         {metadatos.titulo}
                                     </h3>
                                 )}
-                                <div className="flex flex-wrap gap-4 text-sm text-blue-100">
+                                
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600 dark:text-gray-300">
                                     <div className="flex items-center space-x-2">
-                                        <FaCalendarAlt size={14} />
+                                        <FaCalendarAlt className="text-blue-500" size={14} />
                                         <span>Iniciado: {formatFecha(tramite.fecha_registro)}</span>
                                     </div>
                                     <div className="flex items-center space-x-2">
-                                        <FaClock size={14} />
+                                        <FaClock className="text-green-500" size={14} />
                                         <span>{calcularDiasEnProceso(tramite.fecha_registro)} días en proceso</span>
                                     </div>
                                 </div>
                             </div>
-                            <div className="mt-6 lg:mt-0 lg:ml-8">
-                                <div className="bg-white/20 backdrop-blur rounded-2xl p-4 text-center">
-                                    <div className="text-3xl font-bold mb-1">{tramite.etapa.id}</div>
-                                    <div className="text-sm text-blue-100">Etapa Actual</div>
-                                    <div className="text-lg font-semibold mt-2">{tramite.etapa.nombre}</div>
+                            
+                            {/* Estado de etapa */}
+                            <div className="lg:col-span-1">
+                                <div className="bg-blue-50 dark:bg-blue-900 rounded-2xl p-6 text-center border border-blue-200 dark:border-blue-700">
+                                    <div className="text-3xl font-bold text-blue-600 dark:text-blue-400 mb-2">
+                                        {tramite.etapa.id}
+                                    </div>
+                                    <div className="text-sm text-gray-600 dark:text-gray-300 mb-1">Etapa Actual</div>
+                                    <div className="font-semibold text-gray-900 dark:text-gray-100">
+                                        {tramite.etapa.nombre}
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </motion.div>
 
-                    {/* Content Grid */}
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                        {/* Columna Principal */}
-                        <div className="lg:col-span-2 space-y-6">
+                    {/* Content Grid Creativo */}
+                    <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
+                        {/* Columna Principal - 8 columnas */}
+                        <div className="xl:col-span-8 space-y-6">
                             {/* Metadatos del Proyecto */}
                             {metadatos && (
                                 <motion.div
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: 0.3 }}
-                                    className="bg-white dark:bg-gray-800 rounded-2xl shadow-md border border-gray-200 dark:border-gray-700"
+                                    transition={{ delay: 0.2 }}
+                                    className="bg-white dark:bg-gray-800 backdrop-blur-lg rounded-2xl border border-gray-200 dark:border-gray-700 shadow-lg"
                                 >
                                     <div 
-                                        className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700 cursor-pointer"
+                                        className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                                         onClick={() => toggleSection('metadatos')}
                                     >
                                         <div className="flex items-center space-x-3">
-                                            <div className="p-2 bg-blue-100 dark:bg-blue-900/40 rounded-lg">
-                                                <FaFileAlt className="text-blue-600 dark:text-blue-400" size={20} />
+                                            <div className="w-10 h-10 bg-blue-50 dark:bg-blue-900 rounded-lg flex items-center justify-center">
+                                                <FaFileAlt className="text-blue-600 dark:text-blue-400" size={18} />
                                             </div>
-                                            <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                                            <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
                                                 Información del Proyecto
                                             </h3>
                                         </div>
-                                        {expandedSections.metadatos ? <FaChevronUp /> : <FaChevronDown />}
+                                        <div className="text-gray-400 dark:text-gray-500">
+                                            {expandedSections.metadatos ? <FaChevronUp /> : <FaChevronDown />}
+                                        </div>
                                     </div>
 
                                     <AnimatePresence>
@@ -265,29 +305,41 @@ const Resumen = () => {
                                                 className="p-6"
                                             >
                                                 <div className="space-y-6">
-                                                    <div>
-                                                        <h4 className="font-semibold text-gray-900 dark:text-white mb-2">Título</h4>
-                                                        <p className="text-gray-700 dark:text-gray-300">{metadatos.titulo}</p>
-                                                    </div>
-
-                                                    <div>
-                                                        <h4 className="font-semibold text-gray-900 dark:text-white mb-2">Resumen</h4>
-                                                        <p className="text-gray-700 dark:text-gray-300 text-justify leading-relaxed">
-                                                            {metadatos.abstract}
-                                                        </p>
-                                                    </div>
-
-                                                    <div className="grid md:grid-cols-2 gap-6">
+                                                    {/* Grid para título y resumen */}
+                                                    <div className="grid grid-cols-1 gap-6">
                                                         <div>
-                                                            <h4 className="font-semibold text-gray-900 dark:text-white mb-2 flex items-center space-x-2">
-                                                                <FaTags size={16} />
+                                                            <h4 className="flex items-center space-x-2 font-semibold text-gray-900 dark:text-gray-100 mb-3">
+                                                                <FaBookOpen className="text-indigo-500" size={16} />
+                                                                <span>Título</span>
+                                                            </h4>
+                                                            <p className="text-gray-700 dark:text-gray-200 leading-relaxed">
+                                                                {metadatos.titulo}
+                                                            </p>
+                                                        </div>
+
+                                                        <div>
+                                                            <h4 className="flex items-center space-x-2 font-semibold text-gray-900 dark:text-gray-100 mb-3">
+                                                                <FaFileAlt className="text-purple-500" size={16} />
+                                                                <span>Resumen</span>
+                                                            </h4>
+                                                            <p className="text-gray-700 dark:text-gray-200 text-justify leading-relaxed">
+                                                                {metadatos.abstract}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Grid para keywords y presupuesto */}
+                                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                                                        <div>
+                                                            <h4 className="flex items-center space-x-2 font-semibold text-gray-900 dark:text-gray-100 mb-3">
+                                                                <FaTags className="text-pink-500" size={16} />
                                                                 <span>Palabras Clave</span>
                                                             </h4>
                                                             <div className="flex flex-wrap gap-2">
                                                                 {metadatos.keywords.split(', ').map((keyword, index) => (
                                                                     <span
                                                                         key={index}
-                                                                        className="bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-200 px-3 py-1 rounded-full text-sm"
+                                                                        className="bg-blue-50 border border-blue-200 dark:border-blue-700 text-blue-700 dark:text-blue-300 px-3 py-1.5 rounded-full text-sm font-medium"
                                                                     >
                                                                         {keyword}
                                                                     </span>
@@ -296,27 +348,33 @@ const Resumen = () => {
                                                         </div>
 
                                                         <div>
-                                                            <h4 className="font-semibold text-gray-900 dark:text-white mb-2 flex items-center space-x-2">
-                                                                <FaDollarSign size={16} />
+                                                            <h4 className="flex items-center space-x-2 font-semibold text-gray-900 dark:text-gray-100 mb-3">
+                                                                <FaDollarSign className="text-green-500" size={16} />
                                                                 <span>Presupuesto</span>
                                                             </h4>
-                                                            <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-                                                                S/. {metadatos.presupuesto.toLocaleString('es-PE', { minimumFractionDigits: 2 })}
-                                                            </p>
+                                                            <div className="bg-green-50 dark:bg-green-900 border border-green-200 dark:border-green-700 rounded-lg p-4">
+                                                                <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+                                                                    S/. {metadatos.presupuesto.toLocaleString('es-PE', { minimumFractionDigits: 2 })}
+                                                                </p>
+                                                                <p className="text-sm text-green-700 dark:text-green-300 mt-1">
+                                                                    Presupuesto estimado
+                                                                </p>
+                                                            </div>
                                                         </div>
                                                     </div>
 
+                                                    {/* Línea de investigación */}
                                                     {tramite.sublinea_vri && (
                                                         <div>
-                                                            <h4 className="font-semibold text-gray-900 dark:text-white mb-2 flex items-center space-x-2">
-                                                                <FaBookOpen size={16} />
+                                                            <h4 className="flex items-center space-x-2 font-semibold text-gray-900 dark:text-gray-100 mb-3">
+                                                                <FaUniversity className="text-orange-500" size={16} />
                                                                 <span>Línea de Investigación</span>
                                                             </h4>
-                                                            <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-                                                                <p className="font-medium text-gray-900 dark:text-white">
+                                                            <div className="bg-orange-50 dark:bg-orange-900 border border-orange-200 dark:border-orange-700 rounded-lg p-4">
+                                                                <p className="font-semibold text-gray-900 dark:text-gray-100 mb-1">
                                                                     {tramite.sublinea_vri.nombre}
                                                                 </p>
-                                                                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                                                                <p className="text-sm text-gray-600 dark:text-gray-300">
                                                                     {tramite.sublinea_vri.linea_universidad.nombre} • {tramite.sublinea_vri.area_ocde.nombre}
                                                                 </p>
                                                             </div>
@@ -333,19 +391,19 @@ const Resumen = () => {
                             <motion.div
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 0.4 }}
-                                className="bg-white dark:bg-gray-800 rounded-2xl shadow-md border border-gray-200 dark:border-gray-700"
+                                transition={{ delay: 0.3 }}
+                                className="bg-white dark:bg-gray-800 backdrop-blur-lg rounded-2xl border border-gray-200 dark:border-gray-700 shadow-lg"
                             >
                                 <div 
-                                    className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700 cursor-pointer"
+                                    className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                                     onClick={() => toggleSection('archivos')}
                                 >
                                     <div className="flex items-center space-x-3">
-                                        <div className="p-2 bg-green-100 dark:bg-green-900/40 rounded-lg">
-                                            <FaFileAlt className="text-green-600 dark:text-green-400" size={20} />
+                                        <div className="w-10 h-10 bg-green-50 dark:bg-green-900 rounded-lg flex items-center justify-center">
+                                            <FaFileAlt className="text-green-600 dark:text-green-400" size={18} />
                                         </div>
                                         <div>
-                                            <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                                            <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
                                                 Documentos Cargados
                                             </h3>
                                             <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -353,7 +411,9 @@ const Resumen = () => {
                                             </p>
                                         </div>
                                     </div>
-                                    {expandedSections.archivos ? <FaChevronUp /> : <FaChevronDown />}
+                                    <div className="text-gray-400 dark:text-gray-500">
+                                        {expandedSections.archivos ? <FaChevronUp /> : <FaChevronDown />}
+                                    </div>
                                 </div>
 
                                 <AnimatePresence>
@@ -364,34 +424,37 @@ const Resumen = () => {
                                             exit={{ opacity: 0, height: 0 }}
                                             className="p-6"
                                         >
-                                            <div className="space-y-4">
+                                            <div className="grid gap-4">
                                                 {archivos.map((archivo, index) => (
                                                     <motion.div
                                                         key={archivo.id}
                                                         initial={{ opacity: 0, x: -20 }}
                                                         animate={{ opacity: 1, x: 0 }}
                                                         transition={{ delay: index * 0.1 }}
-                                                        className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg"
+                                                        className="flex items-center justify-between p-4 bg-gray-100 dark:bg-gray-700 rounded-lg border border-gray-300 dark:border-gray-600"
                                                     >
-                                                        <div className="flex items-center space-x-3">
-                                                            <div className="p-2 bg-white dark:bg-gray-600 rounded-lg">
+                                                        <div className="flex items-center space-x-4">
+                                                            <div className="w-10 h-10 bg-white dark:bg-gray-600 rounded-lg flex items-center justify-center">
                                                                 <FaFileAlt className="text-gray-600 dark:text-gray-300" size={16} />
                                                             </div>
                                                             <div>
-                                                                <h4 className="font-medium text-gray-900 dark:text-white">
+                                                                <h4 className="font-semibold text-gray-900 dark:text-gray-100">
                                                                     {archivo.tipo_archivo.nombre}
                                                                 </h4>
-                                                                <p className="text-sm text-gray-600 dark:text-gray-400">
-                                                                    {archivo.nombre_archivo} • {formatFecha(archivo.fecha)}
+                                                                <p className="text-sm text-gray-600 dark:text-gray-300">
+                                                                    {archivo.nombre_archivo}
+                                                                </p>
+                                                                <p className="text-xs text-gray-500 dark:text-gray-400">
+                                                                    {formatFecha(archivo.fecha)}
                                                                 </p>
                                                             </div>
                                                         </div>
-                                                        <div className="flex items-center space-x-2">
-                                                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${getEstadoColor(archivo.estado_archivo)}`}>
+                                                        <div className="flex items-center space-x-3">
+                                                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${getEstadoColor(archivo.estado_archivo)}`}>
                                                                 {archivo.estado_archivo === 1 ? 'Activo' : 'Inactivo'}
                                                             </span>
                                                             <button
-                                                                className="p-2 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200"
+                                                                className="p-2 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200 hover:bg-blue-50 dark:hover:bg-blue-900 rounded-lg transition-colors"
                                                                 title="Ver archivo"
                                                             >
                                                                 <FaEye size={16} />
@@ -409,19 +472,19 @@ const Resumen = () => {
                             <motion.div
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 0.5 }}
-                                className="bg-white dark:bg-gray-800 rounded-2xl shadow-md border border-gray-200 dark:border-gray-700"
+                                transition={{ delay: 0.4 }}
+                                className="bg-white dark:bg-gray-800 backdrop-blur-lg rounded-2xl border border-gray-200 dark:border-gray-700 shadow-lg"
                             >
                                 <div 
-                                    className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700 cursor-pointer"
+                                    className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                                     onClick={() => toggleSection('historial')}
                                 >
                                     <div className="flex items-center space-x-3">
-                                        <div className="p-2 bg-purple-100 dark:bg-purple-900/40 rounded-lg">
-                                            <FaHistory className="text-purple-600 dark:text-purple-400" size={20} />
+                                        <div className="w-10 h-10 bg-purple-50 dark:bg-purple-900 rounded-lg flex items-center justify-center">
+                                            <FaHistory className="text-purple-600 dark:text-purple-400" size={18} />
                                         </div>
                                         <div>
-                                            <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                                            <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
                                                 Historial de Actividades
                                             </h3>
                                             <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -429,7 +492,9 @@ const Resumen = () => {
                                             </p>
                                         </div>
                                     </div>
-                                    {expandedSections.historial ? <FaChevronUp /> : <FaChevronDown />}
+                                    <div className="text-gray-400 dark:text-gray-500">
+                                        {expandedSections.historial ? <FaChevronUp /> : <FaChevronDown />}
+                                    </div>
                                 </div>
 
                                 <AnimatePresence>
@@ -447,19 +512,19 @@ const Resumen = () => {
                                                         initial={{ opacity: 0, x: -20 }}
                                                         animate={{ opacity: 1, x: 0 }}
                                                         transition={{ delay: index * 0.1 }}
-                                                        className="flex items-start space-x-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg"
+                                                        className="flex items-start space-x-4 p-4 bg-gray-100 dark:bg-gray-700 rounded-lg border border-gray-300 dark:border-gray-600"
                                                     >
-                                                        <div className="p-2 bg-white dark:bg-gray-600 rounded-full">
-                                                            <FaCheckCircle className="text-green-600 dark:text-green-400" size={16} />
+                                                        <div className="w-8 h-8 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                                                            <FaCheckCircle className="text-green-600 dark:text-green-400" size={14} />
                                                         </div>
                                                         <div className="flex-1">
-                                                            <h4 className="font-medium text-gray-900 dark:text-white">
+                                                            <h4 className="font-semibold text-gray-900 dark:text-gray-100">
                                                                 {accion.accion.nombre}
                                                             </h4>
-                                                            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                                                            <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
                                                                 {accion.mensaje || accion.accion.descripcion}
                                                             </p>
-                                                            <div className="flex items-center space-x-4 mt-2 text-xs text-gray-500 dark:text-gray-400">
+                                                            <div className="flex flex-wrap items-center gap-3 mt-2 text-xs text-gray-500 dark:text-gray-400">
                                                                 <span>{formatFecha(accion.fecha)}</span>
                                                                 <span>•</span>
                                                                 <span>{accion.usuario.nombres} {accion.usuario.apellidos}</span>
@@ -476,25 +541,25 @@ const Resumen = () => {
                             </motion.div>
                         </div>
 
-                        {/* Columna Lateral */}
-                        <div className="space-y-6">
+                        {/* Columna Lateral - 4 columnas */}
+                        <div className="xl:col-span-4 space-y-6">
                             {/* Integrantes */}
                             <motion.div
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 0.3 }}
-                                className="bg-white dark:bg-gray-800 rounded-2xl shadow-md border border-gray-200 dark:border-gray-700"
+                                transition={{ delay: 0.2 }}
+                                className="bg-white dark:bg-gray-800 backdrop-blur-lg rounded-2xl border border-gray-200 dark:border-gray-700 shadow-lg"
                             >
                                 <div 
-                                    className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700 cursor-pointer"
+                                    className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                                     onClick={() => toggleSection('integrantes')}
                                 >
                                     <div className="flex items-center space-x-3">
-                                        <div className="p-2 bg-blue-100 dark:bg-blue-900/40 rounded-lg">
-                                            <FaUsers className="text-blue-600 dark:text-blue-400" size={20} />
+                                        <div className="w-10 h-10 bg-blue-50 dark:bg-blue-900 rounded-lg flex items-center justify-center">
+                                            <FaUsers className="text-blue-600 dark:text-blue-400" size={18} />
                                         </div>
                                         <div>
-                                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                                            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                                                 Integrantes
                                             </h3>
                                             <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -502,7 +567,9 @@ const Resumen = () => {
                                             </p>
                                         </div>
                                     </div>
-                                    {expandedSections.integrantes ? <FaChevronUp /> : <FaChevronDown />}
+                                    <div className="text-gray-400 dark:text-gray-500 text-sm">
+                                        {expandedSections.integrantes ? <FaChevronUp /> : <FaChevronDown />}
+                                    </div>
                                 </div>
 
                                 <AnimatePresence>
@@ -522,19 +589,22 @@ const Resumen = () => {
                                                             initial={{ opacity: 0, x: -20 }}
                                                             animate={{ opacity: 1, x: 0 }}
                                                             transition={{ delay: index * 0.1 }}
-                                                            className="flex items-center space-x-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
+                                                            className="flex items-center space-x-3 p-4 bg-gray-100 dark:bg-gray-700 rounded-lg border border-gray-300 dark:border-gray-600"
                                                         >
-                                                            <div className={`p-2 rounded-lg bg-${tipoInfo.color}-100 dark:bg-${tipoInfo.color}-900/40`}>
-                                                                <div className={`text-${tipoInfo.color}-600 dark:text-${tipoInfo.color}-400`}>
+                                                            <div className="w-10 h-10 bg-blue-50 dark:bg-blue-900 rounded-lg flex items-center justify-center">
+                                                                <div className="text-blue-600 dark:text-blue-400">
                                                                     {tipoInfo.icon}
                                                                 </div>
                                                             </div>
                                                             <div className="flex-1">
-                                                                <h4 className="font-medium text-gray-900 dark:text-white">
+                                                                <h4 className="font-semibold text-gray-900 dark:text-gray-100">
                                                                     {integrante.tesista.usuario.nombres} {integrante.tesista.usuario.apellidos}
                                                                 </h4>
-                                                                <p className="text-sm text-gray-600 dark:text-gray-400">
-                                                                    {tipoInfo.label} • {integrante.tesista.codigo_estudiante}
+                                                                <p className="text-sm text-gray-600 dark:text-gray-300">
+                                                                    {tipoInfo.label}
+                                                                </p>
+                                                                <p className="text-xs text-gray-500 dark:text-gray-400">
+                                                                    {integrante.tesista.codigo_estudiante}
                                                                 </p>
                                                             </div>
                                                         </motion.div>
@@ -551,19 +621,19 @@ const Resumen = () => {
                                 <motion.div
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: 0.4 }}
-                                    className="bg-white dark:bg-gray-800 rounded-2xl shadow-md border border-gray-200 dark:border-gray-700"
+                                    transition={{ delay: 0.3 }}
+                                    className="bg-white dark:bg-gray-800 backdrop-blur-lg rounded-2xl border border-gray-200 dark:border-gray-700 shadow-lg"
                                 >
                                     <div 
-                                        className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700 cursor-pointer"
+                                        className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                                         onClick={() => toggleSection('asesor')}
                                     >
                                         <div className="flex items-center space-x-3">
-                                            <div className="p-2 bg-green-100 dark:bg-green-900/40 rounded-lg">
-                                                <FaUserTie className="text-green-600 dark:text-green-400" size={20} />
+                                            <div className="w-10 h-10 bg-green-50 dark:bg-green-900 rounded-lg flex items-center justify-center">
+                                                <FaUserTie className="text-green-600 dark:text-green-400" size={18} />
                                             </div>
                                             <div>
-                                                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                                                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                                                     Equipo Asesor
                                                 </h3>
                                                 <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -571,7 +641,9 @@ const Resumen = () => {
                                                 </p>
                                             </div>
                                         </div>
-                                        {expandedSections.asesor ? <FaChevronUp /> : <FaChevronDown />}
+                                        <div className="text-gray-400 dark:text-gray-500">
+                                            {expandedSections.asesor ? <FaChevronUp /> : <FaChevronDown />}
+                                        </div>
                                     </div>
 
                                     <AnimatePresence>
@@ -584,22 +656,22 @@ const Resumen = () => {
                                             >
                                                 <div className="space-y-4">
                                                     {/* Asesor Principal */}
-                                                    <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                                                    <div className="p-4 bg-green-50 dark:bg-green-900 rounded-lg">
                                                         <div className="flex items-start space-x-3">
-                                                            <div className="p-2 bg-green-100 dark:bg-green-900/40 rounded-lg">
-                                                                <FaGraduationCap className="text-green-600 dark:text-green-400" size={20} />
+                                                            <div className="w-10 h-10 bg-green-100 dark:bg-green-800 rounded-lg flex items-center justify-center">
+                                                                <FaGraduationCap className="text-green-600 dark:text-green-400" size={18} />
                                                             </div>
                                                             <div className="flex-1">
                                                                 <h4 className="font-semibold text-green-900 dark:text-green-100">
                                                                     Asesor Principal
                                                                 </h4>
-                                                                <p className="font-medium text-gray-900 dark:text-white mt-1">
+                                                                <p className="font-medium text-gray-900 dark:text-gray-100 mt-1">
                                                                     {asesor.docente.usuario.nombres} {asesor.docente.usuario.apellidos}
                                                                 </p>
-                                                                <p className="text-sm text-gray-600 dark:text-gray-400">
+                                                                <p className="text-sm text-gray-600 dark:text-gray-300">
                                                                     {asesor.docente.especialidad.nombre}
                                                                 </p>
-                                                                <p className="text-xs text-gray-500 dark:text-gray-500 mt-2">
+                                                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
                                                                     Asignado: {formatFecha(asesor.fecha_asignacion)}
                                                                 </p>
                                                             </div>
@@ -608,25 +680,25 @@ const Resumen = () => {
 
                                                     {/* Coasesor */}
                                                     {asesor.coasesor && (
-                                                        <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                                                        <div className="p-4 bg-blue-50 dark:bg-blue-900 rounded-lg">
                                                             <div className="flex items-start space-x-3">
-                                                                <div className="p-2 bg-blue-100 dark:bg-blue-900/40 rounded-lg">
-                                                                    <FaUniversity className="text-blue-600 dark:text-blue-400" size={20} />
+                                                                <div className="w-10 h-10 bg-blue-100 dark:bg-blue-800 rounded-lg flex items-center justify-center">
+                                                                    <FaUniversity className="text-blue-600 dark:text-blue-400" size={18} />
                                                                 </div>
                                                                 <div className="flex-1">
                                                                     <h4 className="font-semibold text-blue-900 dark:text-blue-100">
                                                                         Coasesor
                                                                     </h4>
-                                                                    <p className="font-medium text-gray-900 dark:text-white mt-1">
+                                                                    <p className="font-medium text-gray-900 dark:text-gray-100 mt-1">
                                                                         {asesor.coasesor.investigador.usuario.nombres} {asesor.coasesor.investigador.usuario.apellidos}
                                                                     </p>
                                                                     {asesor.coasesor.investigador.nivel_renacyt && (
-                                                                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                                                                        <p className="text-sm text-gray-600 dark:text-gray-300">
                                                                             {asesor.coasesor.investigador.nivel_renacyt}
                                                                         </p>
                                                                     )}
                                                                     {asesor.coasesor.investigador.orcid && (
-                                                                        <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                                                                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                                                                             ORCID: {asesor.coasesor.investigador.orcid}
                                                                         </p>
                                                                     )}
@@ -645,8 +717,8 @@ const Resumen = () => {
                             <motion.div
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 0.5 }}
-                                className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-2xl p-6"
+                                transition={{ delay: 0.4 }}
+                                className="bg-blue-50 dark:bg-blue-900 border border-blue-200 dark:border-blue-700 rounded-2xl p-6"
                             >
                                 <div className="flex items-start space-x-3">
                                     <FaInfoCircle className="text-blue-600 dark:text-blue-400 flex-shrink-0 mt-1" size={20} />
@@ -689,7 +761,7 @@ const Resumen = () => {
                     </motion.div>
                 </div>
             </Container>
-        </motion.div>
+        </div>
     )
 }
 

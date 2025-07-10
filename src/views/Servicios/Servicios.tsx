@@ -18,6 +18,7 @@ import {
     FaUsers,
     FaArrowRight
 } from 'react-icons/fa';
+import Alert from '@/components/ui/Alert'
 
 import AddServiceModal from '@/components/shared/AddServiceModal/AddServiceModal'
 import VerifyStudentModal from '@/components/shared/VerifyStudentModal/VerifyStudentModal'
@@ -379,8 +380,7 @@ const Servicios = () => {
                 // Refrescar la lista de servicios
                 await fetchServices()
 
-                // ✅ Usar el nombre que viene directamente de la Edge Function
-                alert(`¡Servicio de tesista agregado exitosamente para ${studentData.dicEstructuraAcademica}!`)
+            
             }
         } catch (error) {
             console.error('❌ Error agregando servicio:', error)
