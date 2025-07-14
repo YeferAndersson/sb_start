@@ -152,10 +152,10 @@ const DocenteService = () => {
                                 <FaChalkboardTeacher className="text-3xl" />
                             </motion.div>
                             <div>
-                                <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                                <h2 className="text-3xl font-bold text-white mb-2">
                                     Portal Docente - PILAR
                                 </h2>
-                                <p className="text-gray-600 dark:text-gray-400">
+                                <p className="text-gray-400">
                                     Gestiona tu trabajo como director de tesis y miembro de jurado
                                 </p>
                             </div>
