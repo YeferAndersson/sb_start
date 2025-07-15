@@ -7,7 +7,7 @@ import {
     HiExclamation,
     HiXCircle,
 } from 'react-icons/hi'
-import { motion } from 'framer-motion'
+import { motion } from 'motion/react'
 import CloseButton from '../CloseButton'
 import StatusIcon from '../StatusIcon'
 import type { TypeAttributes, CommonProps } from '../@types/common'

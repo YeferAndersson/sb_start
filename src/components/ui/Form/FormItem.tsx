@@ -1,5 +1,5 @@
 import classNames from '../utils/classNames'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence } from 'motion/react'
 import { useForm, FormItemContextProvider } from './context'
 import { useConfig } from '../ConfigProvider'
 import { CONTROL_SIZES, LAYOUT } from '../utils/constants'

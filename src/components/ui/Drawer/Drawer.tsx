@@ -1,7 +1,7 @@
 import classNames from 'classnames'
 import Modal from 'react-modal'
 import CloseButton from '../CloseButton'
-import { motion } from 'framer-motion'
+import { motion } from 'motion/react'
 import type ReactModal from 'react-modal'
 import type { MouseEvent, ReactNode } from 'react'
 

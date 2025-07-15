@@ -9,7 +9,7 @@ import {
 } from 'react'
 import classNames from 'classnames'
 import chainedFunction from '../utils/chainedFunction'
-import { motion } from 'framer-motion'
+import { motion } from 'motion/react'
 import { getPlacementTransition } from './transition'
 import { PLACEMENT } from '../utils/constants'
 import { createRoot } from 'react-dom/client'
