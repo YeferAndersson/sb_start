@@ -90,70 +90,70 @@
 		/* Neutral */
 		--neutral: #ffffff;
 		
-		/* Primary - Escala optimizada para modo oscuro */
-		--primary-50: #1e1b4b;
-		--primary-100: #312e81;
-		--primary-200: #3730a3;
-		--primary-300: #4338ca;
-		--primary-400: #4f46e5;
-		--primary-500: #6366f1;    /* Tu color base modo oscuro */
-		--primary-600: #818cf8;    /* Tu primary-mild actual */
-		--primary-700: #a5b4fc;
-		--primary-800: #c7d2fe;
-		--primary-900: #e0e7ff;
-		--primary-950: #eef2ff;
+		/* Primary - Misma escala, solo ajuste ligero de tonos base para mejor contraste */
+		--primary-50: #eef2ff;
+		--primary-100: #e0e7ff;
+		--primary-200: #c7d2fe;
+		--primary-300: #a5b4fc;
+		--primary-400: #818cf8;
+		--primary-500: #6366f1;    /* Ligeramente más claro para mejor contraste en dark */
+		--primary-600: #4f46e5;    /* Tu color base */
+		--primary-700: #4338ca;    /* Tu primary-deep */
+		--primary-800: #3730a3;
+		--primary-900: #312e81;
+		--primary-950: #1e1b4b;
 		
-		/* Error - Escala para modo oscuro */
-		--error-50: #450a0a;
-		--error-100: #7f1d1d;
-		--error-200: #991b1b;
-		--error-300: #b91c1c;
-		--error-400: #dc2626;
-		--error-500: #f87171;      /* Tu color base modo oscuro */
-		--error-600: #fca5a5;
-		--error-700: #fecaca;
-		--error-800: #fee2e2;
-		--error-900: #fef2f2;
-		--error-950: #fefefe;
+		/* Error - Misma escala, solo ajuste ligero del tono base */
+		--error-50: #fef2f2;
+		--error-100: #fee2e2;
+		--error-200: #fecaca;
+		--error-300: #fca5a5;
+		--error-400: #f87171;      /* Ligeramente más claro para mejor contraste en dark */
+		--error-500: #ef4444;
+		--error-600: #dc2626;
+		--error-700: #b91c1c;
+		--error-800: #991b1b;
+		--error-900: #7f1d1d;
+		--error-950: #450a0a;
 		
-		/* Success - Escala para modo oscuro */
-		--success-50: #022c22;
-		--success-100: #064e3b;
-		--success-200: #065f46;
-		--success-300: #047857;
-		--success-400: #059669;
-		--success-500: #34d399;    /* Tu color base modo oscuro */
-		--success-600: #6ee7b7;
-		--success-700: #a7f3d0;
-		--success-800: #d1fae5;
-		--success-900: #ecfdf5;
-		--success-950: #fefefe;
+		/* Success - Misma escala, solo ajuste ligero del tono base */
+		--success-50: #ecfdf5;
+		--success-100: #d1fae5;
+		--success-200: #a7f3d0;
+		--success-300: #6ee7b7;
+		--success-400: #34d399;    /* Ligeramente más claro para mejor contraste en dark */
+		--success-500: #10b981;
+		--success-600: #059669;
+		--success-700: #047857;
+		--success-800: #065f46;
+		--success-900: #064e3b;
+		--success-950: #022c22;
 		
-		/* Info - Escala para modo oscuro */
-		--info-50: #172554;
-		--info-100: #1e3a8a;
-		--info-200: #1e40af;
-		--info-300: #1d4ed8;
-		--info-400: #2563eb;
-		--info-500: #60a5fa;       /* Tu color base modo oscuro */
-		--info-600: #93c5fd;
-		--info-700: #bfdbfe;
-		--info-800: #dbeafe;
-		--info-900: #eff6ff;
-		--info-950: #fefefe;
+		/* Info - Misma escala, solo ajuste ligero del tono base */
+		--info-50: #eff6ff;
+		--info-100: #dbeafe;
+		--info-200: #bfdbfe;
+		--info-300: #93c5fd;
+		--info-400: #60a5fa;       /* Ligeramente más claro para mejor contraste en dark */
+		--info-500: #3b82f6;
+		--info-600: #2563eb;
+		--info-700: #1d4ed8;
+		--info-800: #1e40af;
+		--info-900: #1e3a8a;
+		--info-950: #172554;
 		
-		/* Warning - Escala para modo oscuro */
-		--warning-50: #451a03;
-		--warning-100: #78350f;
-		--warning-200: #92400e;
-		--warning-300: #b45309;
-		--warning-400: #d97706;
-		--warning-500: #fbbf24;    /* Tu color base modo oscuro */
-		--warning-600: #fcd34d;
-		--warning-700: #fde68a;
-		--warning-800: #fef3c7;
-		--warning-900: #fffbeb;
-		--warning-950: #fefefe;
+		/* Warning - Misma escala, solo ajuste ligero del tono base */
+		--warning-50: #fffbeb;
+		--warning-100: #fef3c7;
+		--warning-200: #fde68a;
+		--warning-300: #fcd34d;
+		--warning-400: #fbbf24;    /* Ligeramente más claro para mejor contraste en dark */
+		--warning-500: #f59e0b;
+		--warning-600: #d97706;
+		--warning-700: #b45309;
+		--warning-800: #92400e;
+		--warning-900: #78350f;
+		--warning-950: #451a03;
 		
 		/* Escala de grises - mantenida igual */
 		--gray-50: #fafafa;
