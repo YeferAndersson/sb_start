@@ -278,13 +278,13 @@ const Servicios = () => {
                 navigate('/servicio/coordinador');
                 break;
             case 4: // PILAR PREGRADO ADMINISTRACIONVRI
-                navigate('/servicio/administracion');
+                navigate('/servicio/admin');
                 break;
             case 5: // Director de Facultad
-                navigate('/servicio/director-facultad');
+                navigate('/servicio/director');
                 break;
             case 6: // Director-Subdirector de Investigacion de Escuela
-                navigate('/servicio/director-escuela');
+                navigate('/servicio/subdirector');
                 break;
             default:
                 navigate('/servicios');

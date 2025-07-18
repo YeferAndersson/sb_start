@@ -11,6 +11,7 @@ const othersRoute: Routes = [
         meta: {
             pageBackgroundType: 'plain',
             pageContainerType: 'contained',
+            footer: false,
         },
     },
 ]

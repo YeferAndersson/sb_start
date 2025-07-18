@@ -49,6 +49,46 @@ export const protectedRoutes: Routes = [
             footer: false,
         }
     },
+    {
+        key: 'servicios.coordinador',
+        path: '/servicio/coordinador',
+        component: lazy(() => import('@/views/ServicePages/CoordinadorService')),
+        authority: [],
+        meta: {
+            pageContainerType: 'contained',
+            footer: false,
+        }
+    },
+    {
+        key: 'servicios.admin',
+        path: '/servicio/admin',
+        component: lazy(() => import('@/views/ServicePages/AdminService')),
+        authority: [],
+        meta: {
+            pageContainerType: 'contained',
+            footer: false,
+        }
+    },
+    {
+        key: 'servicios.director',
+        path: '/servicio/director',
+        component: lazy(() => import('@/views/ServicePages/DirectorService')),
+        authority: [],
+        meta: {
+            pageContainerType: 'contained',
+            footer: false,
+        }
+    },
+    {
+        key: 'servicios.subdirector',
+        path: '/servicio/subdirector',
+        component: lazy(() => import('@/views/ServicePages/SubDirectorService')),
+        authority: [],
+        meta: {
+            pageContainerType: 'contained',
+            footer: false,
+        }
+    },
 
     {
     key: 'pilar.pregrado.estudiantes.etapa1.tipo-proyecto',

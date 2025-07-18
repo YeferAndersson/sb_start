@@ -17,6 +17,16 @@ const navigationConfig: NavigationTree[] = [
         authority: [],
         subMenu: [],
     },
+    {
+        key: 'support',
+        path: '/support/*',
+        title: 'Soporte',
+        translateKey: 'nav.soporte',
+        icon: 'singleMenu', // Puedes cambiar este icono por uno más adecuado
+        type: NAV_ITEM_TYPE_ITEM,
+        authority: [],
+        subMenu: [],
+    },
 ]
 
 export default navigationConfig
