@@ -1,7 +1,7 @@
 import Modal from 'react-modal'
 import classNames from 'classnames'
 import CloseButton from '../CloseButton'
-import { motion } from 'framer-motion'
+import { motion } from 'motion/react'
 import useWindowSize from '../hooks/useWindowSize'
 import type ReactModal from 'react-modal'
 import type { MouseEvent } from 'react'
