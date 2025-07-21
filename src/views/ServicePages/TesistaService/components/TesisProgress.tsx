@@ -60,7 +60,7 @@ const TesisProgress: React.FC<TesisProgressProps> = ({
       initial={{ opacity: 0, x: -50 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.5 }}
-      className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 p-5"
+      className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-5"
     >
       <h3 className="font-medium text-base text-gray-800 dark:text-white mb-4">Progreso de Tesis</h3>
       

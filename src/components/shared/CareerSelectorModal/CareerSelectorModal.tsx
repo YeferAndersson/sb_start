@@ -46,120 +46,114 @@ const CareerSelectorModal = ({ isOpen, onClose, careers, onSelectCareer }: Caree
     }
 
     const getCareerDisplayInfo = (career: CareerOption) => {
-        const facultadInfo = career.carrera.facultad 
+        const facultadInfo = career.carrera.facultad
             ? `${career.carrera.facultad.abreviatura} - ${career.carrera.facultad.nombre}`
             : 'Facultad no especificada'
-        
+
         return {
             carreraNombre: career.carrera.nombre,
             facultadInfo,
-            codigo: career.codigo_estudiante
+            codigo: career.codigo_estudiante,
         }
     }
 
     return (
-        <Dialog isOpen={isOpen} onClose={handleClose} closable={false}>
-            <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ duration: 0.2 }}
-                className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-xl max-w-lg w-full p-6"
-            >
+        <Dialog isOpen={isOpen} onClose={handleClose} closable={false} width={520}>
+            {/* Contenido sin motion.div duplicado */}
+            <div className='p-6'>
                 {/* Header */}
-                <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center space-x-3">
-                        <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-full text-blue-600 dark:text-blue-400">
+                <div className='flex items-center justify-between mb-6'>
+                    <div className='flex items-center space-x-3'>
+                        <div className='p-2 bg-blue-100 dark:bg-blue-900/30 rounded-full text-blue-600 dark:text-blue-400'>
                             <FaUserGraduate size={20} />
                         </div>
                         <div>
-                            <h2 className="text-lg font-bold text-gray-900 dark:text-white">
-                                Seleccionar Carrera
-                            </h2>
-                            <p className="text-gray-600 dark:text-gray-400 text-sm">
+                            <h2 className='text-lg font-bold text-gray-900 dark:text-white'>Seleccionar Carrera</h2>
+                            <p className='text-gray-600 dark:text-gray-400 text-sm'>
                                 Tienes múltiples carreras, selecciona una para continuar
                             </p>
                         </div>
                     </div>
-                    <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
+                    <button
                         onClick={handleClose}
-                        className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400"
-                    >
+                        className='p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 transition-colors duration-200'>
                         <FaTimes size={16} />
-                    </motion.button>
+                    </button>
                 </div>
 
                 {/* Careers List */}
-                <div className="space-y-3 mb-6 max-h-96 overflow-y-auto">
+                <div className='space-y-3 mb-6 max-h-80 overflow-y-auto overflow-x-hidden pr-1'>
                     <AnimatePresence>
                         {careers.map((career, index) => {
                             const displayInfo = getCareerDisplayInfo(career)
                             const isSelected = selectedCareer?.id === career.id
-                            
+
                             return (
                                 <motion.div
                                     key={`${career.carrera.id}-${career.codigo_estudiante}`}
                                     initial={{ opacity: 0, x: -20 }}
                                     animate={{ opacity: 1, x: 0 }}
                                     transition={{ delay: index * 0.1 }}
-                                    whileHover={{ scale: 1.02 }}
-                                    whileTap={{ scale: 0.98 }}
                                     className={`
-                                        relative cursor-pointer p-4 rounded-xl border-2 transition-all duration-200
-                                        ${isSelected 
-                                            ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 shadow-lg' 
-                                            : 'border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 bg-white dark:bg-gray-800'
-                                        }
-                                    `}
-                                    onClick={() => handleCareerSelect(career)}
-                                >
-                                    <div className="flex items-start justify-between">
-                                        <div className="flex-1">
-                                            <div className="flex items-start space-x-3">
-                                                <motion.div
+                                relative cursor-pointer p-4 rounded-xl border-2 transition-all duration-200 transform-gpu
+                                hover:shadow-md hover:-translate-y-0.5
+                                ${
+                                    isSelected
+                                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 shadow-lg'
+                                        : 'border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 bg-white dark:bg-gray-800'
+                                }
+                            `}
+                                    onClick={() => handleCareerSelect(career)}>
+                                    <div className='flex items-start justify-between'>
+                                        <div className='flex-1 min-w-0 pr-8'>
+                                            <div className='flex items-start space-x-3'>
+                                                <div
                                                     className={`
-                                                        p-2 rounded-lg transition-colors duration-200
-                                                        ${isSelected 
-                                                            ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400' 
-                                                            : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
-                                                        }
-                                                    `}
-                                                    whileHover={{ scale: 1.1 }}
-                                                >
+                                                flex-shrink-0 p-2 rounded-lg transition-all duration-200
+                                                ${
+                                                    isSelected
+                                                        ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400'
+                                                        : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
+                                                }
+                                            `}>
                                                     <FaUserGraduate size={16} />
-                                                </motion.div>
-                                                
-                                                <div className="flex-1 min-w-0">
-                                                    <h3 className={`
-                                                        font-semibold text-sm mb-1 leading-tight
-                                                        ${isSelected 
-                                                            ? 'text-blue-900 dark:text-blue-100' 
+                                                </div>
+
+                                                <div className='flex-1 min-w-0'>
+                                                    <h3
+                                                        className={`
+                                                    font-semibold text-sm mb-1 leading-tight truncate
+                                                    ${
+                                                        isSelected
+                                                            ? 'text-blue-900 dark:text-blue-100'
                                                             : 'text-gray-900 dark:text-white'
-                                                        }
-                                                    `}>
+                                                    }
+                                                `}>
                                                         {displayInfo.carreraNombre}
                                                     </h3>
-                                                    
-                                                    <p className={`
-                                                        text-xs mb-2 leading-relaxed
-                                                        ${isSelected 
-                                                            ? 'text-blue-700 dark:text-blue-300' 
+
+                                                    <p
+                                                        className={`
+                                                    text-xs mb-2 leading-relaxed line-clamp-2
+                                                    ${
+                                                        isSelected
+                                                            ? 'text-blue-700 dark:text-blue-300'
                                                             : 'text-gray-600 dark:text-gray-400'
-                                                        }
-                                                    `}>
+                                                    }
+                                                `}>
                                                         {displayInfo.facultadInfo}
                                                     </p>
-                                                    
-                                                    <div className="flex items-center space-x-2">
-                                                        <span className={`
-                                                            text-xs font-medium px-2 py-1 rounded-full
-                                                            ${isSelected 
-                                                                ? 'bg-blue-200 dark:bg-blue-800 text-blue-800 dark:text-blue-200' 
+
+                                                    <div className='flex items-center'>
+                                                        <span
+                                                            className={`
+                                                        text-xs font-medium px-2 py-1 rounded-full truncate
+                                                        ${
+                                                            isSelected
+                                                                ? 'bg-blue-200 dark:bg-blue-800 text-blue-800 dark:text-blue-200'
                                                                 : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
-                                                            }
-                                                        `}>
+                                                        }
+                                                    `}>
                                                             Código: {displayInfo.codigo}
                                                         </span>
                                                     </div>
@@ -172,9 +166,8 @@ const CareerSelectorModal = ({ isOpen, onClose, careers, onSelectCareer }: Caree
                                             <motion.div
                                                 initial={{ scale: 0, rotate: -180 }}
                                                 animate={{ scale: 1, rotate: 0 }}
-                                                transition={{ type: "spring", duration: 0.3 }}
-                                                className="absolute top-3 right-3 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center"
-                                            >
+                                                transition={{ type: 'spring', duration: 0.3 }}
+                                                className='absolute top-3 right-3 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center'>
                                                 <FaCheck size={12} />
                                             </motion.div>
                                         )}
@@ -190,37 +183,31 @@ const CareerSelectorModal = ({ isOpen, onClose, careers, onSelectCareer }: Caree
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.3 }}
-                    className="mb-6 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg"
-                >
-                    <p className="text-blue-700 dark:text-blue-300 text-xs leading-relaxed">
-                        💡 <strong>Tip:</strong> Podrás cambiar de carrera en cualquier momento desde el panel de tesista. 
-                        La carrera seleccionada determinará el contexto de tus trámites de tesis.
+                    className='mb-6 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg'>
+                    <p className='text-blue-700 dark:text-blue-300 text-xs leading-relaxed'>
+                        💡 <strong>Tip:</strong> Podrás cambiar de carrera en cualquier momento desde el panel de
+                        tesista. La carrera seleccionada determinará el contexto de tus trámites de tesis.
                     </p>
                 </motion.div>
 
                 {/* Footer */}
-                <div className="flex justify-end space-x-3">
-                    <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                        <Button
-                            variant="default"
-                            onClick={handleClose}
-                        >
-                            Cancelar
-                        </Button>
-                    </motion.div>
-                    
-                    <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                        <Button
-                            variant="solid"
-                            onClick={handleConfirm}
-                            disabled={!selectedCareer}
-                            className="min-w-24"
-                        >
-                            Continuar
-                        </Button>
-                    </motion.div>
+                <div className='flex justify-end space-x-3'>
+                    <Button
+                        variant='default'
+                        onClick={handleClose}
+                        className='transition-all duration-200 hover:shadow-md'>
+                        Cancelar
+                    </Button>
+
+                    <Button
+                        variant='solid'
+                        onClick={handleConfirm}
+                        disabled={!selectedCareer}
+                        className='min-w-24 transition-all duration-200 hover:shadow-md'>
+                        Continuar
+                    </Button>
                 </div>
-            </motion.div>
+            </div>
         </Dialog>
     )
 }

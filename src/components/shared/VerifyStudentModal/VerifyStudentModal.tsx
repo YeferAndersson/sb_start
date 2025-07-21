@@ -176,7 +176,6 @@ const VerifyStudentModal = ({ isOpen, onClose, onSuccess }: VerifyStudentModalPr
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
                 transition={{ duration: 0.2 }}
-                className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-xl max-w-md w-full p-6"
             >
                 {/* Header */}
                 <div className="flex items-center justify-between mb-6">
@@ -298,7 +297,6 @@ const VerifyStudentModal = ({ isOpen, onClose, onSuccess }: VerifyStudentModalPr
                                 initial={{ scale: 0 }}
                                 animate={{ scale: 1 }}
                                 transition={{ delay: 0.1, type: "spring" }}
-                                className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4"
                             >
                                 <FaCheck className="text-green-600 dark:text-green-400 text-xl" />
                             </motion.div>
