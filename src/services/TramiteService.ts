@@ -2010,34 +2010,80 @@ export async function getTramiteResumenCompleto(tramiteId: number): Promise<Tram
 /**
  * Genera URL de descarga firmada para un archivo
  */
-export async function downloadArchiveTramite(nombreArchivo: string, userUuid: string): Promise<void> {
+// Función corregida para downloadArchiveTramite
+export async function downloadArchiveTramite(nombreArchivo: string, currentUserUuid: string): Promise<void> {
     try {
         console.log(`📥 Generando descarga para: ${nombreArchivo}`)
 
-        // Construir la ruta del archivo en storage
-        const filePath = `${userUuid}/${nombreArchivo}`
+        // ✅ OPCIÓN 1: Intentar primero con UUID del usuario actual
+        let filePath = `${currentUserUuid}/${nombreArchivo}`
+        
+        let result = await supabase.storage
+            .from('tramites-documentos')
+            .createSignedUrl(filePath, 3600)
 
-        // Generar URL firmada con 1 hora de expiración
-        const { data, error } = await supabase.storage.from('tramites-documentos').createSignedUrl(filePath, 3600) // 3600 segundos = 1 hora
+        let signedUrlData = result.data
+        let downloadError = result.error
 
-        if (error) {
-            console.error('Error generando URL de descarga:', error)
+        // ✅ OPCIÓN 2: Si falla, buscar quién subió el archivo realmente
+        if (downloadError && downloadError.message.includes('Object not found')) {
+            console.log(`📁 Archivo no encontrado en carpeta propia, buscando en proyecto compartido...`)
+            
+            // Obtener el UUID del usuario que subió el archivo
+            const { data: archivoData, error: dbError } = await supabase
+                .from('tbl_archivos_tramites')
+                .select(`
+                    tramite:id_tramite(
+                        integrantes:tbl_integrantes(
+                            tesista:id_tesista(
+                                usuario:id_usuario(uuid)
+                            )
+                        )
+                    )
+                `)
+                .eq('nombre_archivo', nombreArchivo)
+                .eq('estado_archivo', 1)
+                .single()
+
+            if (dbError || !archivoData) {
+                throw new Error('No se encontró información del archivo')
+            }
+
+            // Buscar el archivo en las carpetas de todos los integrantes del proyecto
+            const integrantes = archivoData.tramite?.integrantes || []
+            
+            for (const integrante of integrantes) {
+                const usuarioUuid = integrante.tesista?.usuario?.uuid
+                if (!usuarioUuid) continue
+
+                console.log(`🔍 Intentando descarga desde carpeta: ${usuarioUuid}`)
+                
+                filePath = `${usuarioUuid}/${nombreArchivo}`
+                const attemptResult = await supabase.storage
+                    .from('tramites-documentos')
+                    .createSignedUrl(filePath, 3600)
+                
+                if (!attemptResult.error && attemptResult.data && attemptResult.data.signedUrl) {
+                    signedUrlData = attemptResult.data
+                    downloadError = null
+                    console.log(`✅ Archivo encontrado en carpeta: ${usuarioUuid}`)
+                    break
+                }
+            }
+        }
+
+        if (downloadError || !signedUrlData || !signedUrlData.signedUrl) {
             throw new Error('No se pudo generar el enlace de descarga')
         }
 
-        if (!data.signedUrl) {
-            throw new Error('No se pudo generar el enlace de descarga')
-        }
-
-        console.log(`✅ URL de descarga generada: ${data.signedUrl}`)
+        console.log(`✅ URL de descarga generada: ${signedUrlData.signedUrl}`)
 
         // Crear elemento de descarga temporal
         const link = document.createElement('a')
-        link.href = data.signedUrl
-        link.download = nombreArchivo // Esto sugiere el nombre para la descarga
-        link.target = '_blank' // Abrir en nueva pestaña como backup
+        link.href = signedUrlData.signedUrl
+        link.download = nombreArchivo
+        link.target = '_blank'
 
-        // Agregar al DOM, hacer clic y remover
         document.body.appendChild(link)
         link.click()
         document.body.removeChild(link)
