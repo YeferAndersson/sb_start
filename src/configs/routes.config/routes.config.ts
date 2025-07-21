@@ -7,10 +7,22 @@ import type { Routes } from '@/@types/routes'
 export const publicRoutes: Routes = [
     // Landing page como ruta principal
     {
-        key: 'home',
-        path: '/home',
+        key: 'home_anterior',
+        path: '/home_anterior',
         component: lazy(() => import('@/views/Home')),
         authority: [],
+    },
+    {
+        key: 'landing',
+        path: `/home`,
+        component: lazy(() => import('@/views/others/Landing')),
+        authority: [],
+        meta: {
+            layout: 'blank',
+            footer: false,
+            pageContainerType: 'gutterless',
+            pageBackgroundType: 'plain',
+        },
     },
     // Otras rutas públicas
     ...authRoute

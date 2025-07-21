@@ -14,6 +14,7 @@ const othersRoute: Routes = [
             footer: false,
         },
     },
+    
 ]
 
 export default othersRoute
