@@ -785,7 +785,7 @@ export type Database = {
           estado_coordinador: number | null
           horario: string | null
           id: number
-          id_carrera: number
+          id_facultad: number
           id_usuario: number
           nivel_coordinador: number
           telefono: string | null
@@ -796,7 +796,7 @@ export type Database = {
           estado_coordinador?: number | null
           horario?: string | null
           id?: number
-          id_carrera: number
+          id_facultad: number
           id_usuario: number
           nivel_coordinador: number
           telefono?: string | null
@@ -807,17 +807,17 @@ export type Database = {
           estado_coordinador?: number | null
           horario?: string | null
           id?: number
-          id_carrera?: number
+          id_facultad?: number
           id_usuario?: number
           nivel_coordinador?: number
           telefono?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "fk_tbl_coordinadores_id_carrera_dic_carreras_id"
-            columns: ["id_carrera"]
+            foreignKeyName: "fk_tbl_coordinadores_id_facultad_dic_facultades_id"
+            columns: ["id_facultad"]
             isOneToOne: false
-            referencedRelation: "dic_carreras"
+            referencedRelation: "dic_facultades"
             referencedColumns: ["id"]
           },
           {
