@@ -638,6 +638,97 @@ export type Database = {
           },
         ]
       }
+      tbl_coasesor_tramites: {
+        Row: {
+          estado_coasesor: number
+          fecha_asignacion: string | null
+          id: number
+          id_coasesor: number
+          id_tramite: number
+        }
+        Insert: {
+          estado_coasesor?: number
+          fecha_asignacion?: string | null
+          id?: number
+          id_coasesor: number
+          id_tramite: number
+        }
+        Update: {
+          estado_coasesor?: number
+          fecha_asignacion?: string | null
+          id?: number
+          id_coasesor?: number
+          id_tramite?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_tbl_coasesor_tramites_id_coasesor_tbl_coasesores_id"
+            columns: ["id_coasesor"]
+            isOneToOne: false
+            referencedRelation: "tbl_coasesores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_tbl_coasesor_tramites_id_tramite_tbl_tramites_id"
+            columns: ["id_tramite"]
+            isOneToOne: false
+            referencedRelation: "tbl_tramites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tbl_coasesor_tramites_historial: {
+        Row: {
+          comentario: string | null
+          estado_coasesor: number
+          fecha: string | null
+          id: number
+          id_coasesor: number
+          id_tramite: number
+          id_usuario_responsable: number
+        }
+        Insert: {
+          comentario?: string | null
+          estado_coasesor: number
+          fecha?: string | null
+          id?: number
+          id_coasesor: number
+          id_tramite: number
+          id_usuario_responsable: number
+        }
+        Update: {
+          comentario?: string | null
+          estado_coasesor?: number
+          fecha?: string | null
+          id?: number
+          id_coasesor?: number
+          id_tramite?: number
+          id_usuario_responsable?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_tbl_coasesor_tramites_historial_id_coasesor_tbl_coasesores_i"
+            columns: ["id_coasesor"]
+            isOneToOne: false
+            referencedRelation: "tbl_coasesores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_tbl_coasesor_tramites_historial_id_tramite_tbl_tramites_id"
+            columns: ["id_tramite"]
+            isOneToOne: false
+            referencedRelation: "tbl_tramites"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_tbl_coasesor_tramites_historial_id_usuario_responsable_tbl_u"
+            columns: ["id_usuario_responsable"]
+            isOneToOne: false
+            referencedRelation: "tbl_usuarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tbl_coasesores: {
         Row: {
           estado_coasesor: number
@@ -711,7 +802,6 @@ export type Database = {
           estado_cj: number
           fecha_asignacion: string
           id: number
-          id_coasesor: number | null
           id_docente: number
           id_etapa: number
           id_tramite: number
@@ -722,7 +812,6 @@ export type Database = {
           estado_cj?: number
           fecha_asignacion?: string
           id?: number
-          id_coasesor?: number | null
           id_docente: number
           id_etapa: number
           id_tramite: number
@@ -733,7 +822,6 @@ export type Database = {
           estado_cj?: number
           fecha_asignacion?: string
           id?: number
-          id_coasesor?: number | null
           id_docente?: number
           id_etapa?: number
           id_tramite?: number
@@ -741,13 +829,6 @@ export type Database = {
           orden?: number
         }
         Relationships: [
-          {
-            foreignKeyName: "fk_tbl_conformacion_jurados_id_coasesor_tbl_coasesores_id"
-            columns: ["id_coasesor"]
-            isOneToOne: false
-            referencedRelation: "tbl_coasesores"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "fk_tbl_conformacion_jurados_id_docente_tbl_docentes_id"
             columns: ["id_docente"]

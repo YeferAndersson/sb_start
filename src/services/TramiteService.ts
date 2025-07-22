@@ -1231,6 +1231,202 @@ export async function getCoasesoresActivos(): Promise<CoasesorData[]> {
 }
 
 /**
+ * Asigna un coasesor a un trámite específico
+ */
+export async function assignCoasesorToTramite(
+    tramiteId: number,
+    coasesorId: number,
+    usuarioResponsableId: number,
+): Promise<void> {
+    try {
+        console.log(`👨‍💼 Asignando coasesor ${coasesorId} al trámite ${tramiteId}`)
+
+        // 1. Desactivar cualquier coasesor previo
+        const { error: deactivateError } = await supabase
+            .from('tbl_coasesor_tramites')
+            .update({ estado_coasesor: 0 })
+            .eq('id_tramite', tramiteId)
+            .eq('estado_coasesor', 1)
+
+        if (deactivateError) {
+            console.error('Error desactivando coasesor previo:', deactivateError)
+            throw new Error('Error al desactivar coasesor previo')
+        }
+
+        // 2. Insertar nuevo coasesor activo
+        const { error: insertError } = await supabase
+            .from('tbl_coasesor_tramites')
+            .insert([
+                {
+                    id_tramite: tramiteId,
+                    id_coasesor: coasesorId,
+                    estado_coasesor: 1,
+                    fecha_asignacion: new Date().toISOString(),
+                },
+            ])
+
+        if (insertError) {
+            console.error('Error asignando coasesor:', insertError)
+            throw new Error('Error al asignar el coasesor')
+        }
+
+        // 3. Registrar en historial
+        await saveCoasesorHistorial(tramiteId, coasesorId, usuarioResponsableId, 1, 'Coasesor asignado al proyecto')
+
+        console.log(`✅ Coasesor ${coasesorId} asignado exitosamente al trámite ${tramiteId}`)
+    } catch (error) {
+        console.error('❌ Error en assignCoasesorToTramite:', error)
+        throw error
+    }
+}
+
+/**
+ * Remueve el coasesor activo de un trámite
+ */
+export async function removeCoasesorFromTramite(
+    tramiteId: number,
+    usuarioResponsableId: number,
+    motivo: string = 'Coasesor removido del proyecto',
+): Promise<void> {
+    try {
+        console.log(`👨‍💼 Removiendo coasesor del trámite ${tramiteId}`)
+
+        // 1. Obtener coasesor activo actual
+        const { data: coasesorActivo, error: getError } = await supabase
+            .from('tbl_coasesor_tramites')
+            .select('id_coasesor')
+            .eq('id_tramite', tramiteId)
+            .eq('estado_coasesor', 1)
+            .single()
+
+        if (getError && getError.code !== 'PGRST116') {
+            console.error('Error obteniendo coasesor activo:', getError)
+            throw new Error('Error al obtener coasesor activo')
+        }
+
+        if (!coasesorActivo) {
+            console.log('No hay coasesor activo para remover')
+            return
+        }
+
+        // 2. Desactivar coasesor
+        const { error: updateError } = await supabase
+            .from('tbl_coasesor_tramites')
+            .update({ estado_coasesor: 0 })
+            .eq('id_tramite', tramiteId)
+            .eq('estado_coasesor', 1)
+
+        if (updateError) {
+            console.error('Error removiendo coasesor:', updateError)
+            throw new Error('Error al remover el coasesor')
+        }
+
+        // 3. Registrar en historial
+        await saveCoasesorHistorial(tramiteId, coasesorActivo.id_coasesor, usuarioResponsableId, 0, motivo)
+
+        console.log(`✅ Coasesor removido exitosamente del trámite ${tramiteId}`)
+    } catch (error) {
+        console.error('❌ Error en removeCoasesorFromTramite:', error)
+        throw error
+    }
+}
+
+/**
+ * Obtiene el coasesor activo de un trámite específico
+ */
+export async function getCoasesorByTramite(tramiteId: number): Promise<CoasesorData | null> {
+    try {
+        const { data, error } = await supabase
+            .from('tbl_coasesor_tramites')
+            .select(
+                `
+                id,
+                coasesor:id_coasesor(
+                    id,
+                    investigador:id_investigador(
+                        id,
+                        orcid,
+                        codigo_renacyt,
+                        nivel_renacyt,
+                        usuario:id_usuario(
+                            id,
+                            nombres,
+                            apellidos,
+                            correo
+                        )
+                    )
+                )
+            `,
+            )
+            .eq('id_tramite', tramiteId)
+            .eq('estado_coasesor', 1)
+            .single()
+
+        if (error && error.code !== 'PGRST116') {
+            console.error('Error obteniendo coasesor:', error)
+            throw new Error('Error al obtener el coasesor del trámite')
+        }
+
+        if (!data || !data.coasesor) {
+            return null
+        }
+
+        return {
+            id: data.coasesor.id,
+            investigador: {
+                id: data.coasesor.investigador.id,
+                usuario: {
+                    id: data.coasesor.investigador.usuario.id,
+                    nombres: data.coasesor.investigador.usuario.nombres,
+                    apellidos: data.coasesor.investigador.usuario.apellidos,
+                    correo: data.coasesor.investigador.usuario.correo,
+                },
+                orcid: data.coasesor.investigador.orcid,
+                codigo_renacyt: data.coasesor.investigador.codigo_renacyt,
+                nivel_renacyt: data.coasesor.investigador.nivel_renacyt,
+            },
+        }
+    } catch (error) {
+        console.error('❌ Error en getCoasesorByTramite:', error)
+        return null
+    }
+}
+
+/**
+ * Guarda un registro en el historial de coasesores
+ */
+export async function saveCoasesorHistorial(
+    tramiteId: number,
+    coasesorId: number,
+    usuarioResponsableId: number,
+    estadoCoasesor: number,
+    comentario: string,
+): Promise<void> {
+    try {
+        const { error } = await supabase.from('tbl_coasesor_tramites_historial').insert([
+            {
+                id_tramite: tramiteId,
+                id_coasesor: coasesorId,
+                id_usuario_responsable: usuarioResponsableId,
+                estado_coasesor: estadoCoasesor,
+                comentario,
+                fecha: new Date().toISOString(),
+            },
+        ])
+
+        if (error) {
+            console.error('Error guardando historial de coasesor:', error)
+            throw new Error('Error al guardar el historial del coasesor')
+        }
+
+        console.log(`✅ Historial de coasesor guardado: Estado ${estadoCoasesor}`)
+    } catch (error) {
+        console.error('❌ Error en saveCoasesorHistorial:', error)
+        throw error
+    }
+}
+
+/**
  * Obtiene los tipos de archivos requeridos para Etapa 1
  */
 export async function getTiposArchivosEtapa1(): Promise<TipoArchivoEtapa1[]> {
@@ -1264,7 +1460,7 @@ export async function getTiposArchivosEtapa1(): Promise<TipoArchivoEtapa1[]> {
 }
 
 /**
- * Asigna asesor y coasesor al proyecto
+ * Asigna asesor y coasesor al proyecto (REFACTORIZADO)
  */
 export async function assignAsesorYCoasesor(
     tramiteId: number,
@@ -1275,10 +1471,14 @@ export async function assignAsesorYCoasesor(
     try {
         console.log(`🎯 Asignando asesor ${asesorId} al trámite ${tramiteId}`)
 
-        // Primero eliminar cualquier conformación previa para este trámite en etapa 1
-        await supabase.from('tbl_conformacion_jurados').delete().eq('id_tramite', tramiteId).eq('id_etapa', 1)
+        // 1. Eliminar cualquier conformación previa para este trámite en etapa 1 (solo asesor)
+        await supabase
+            .from('tbl_conformacion_jurados')
+            .delete()
+            .eq('id_tramite', tramiteId)
+            .eq('id_etapa', 1)
 
-        // Insertar nuevo asesor
+        // 2. Insertar nuevo asesor (SIN coasesor en esta tabla)
         const { error: asesorError } = await supabase.from('tbl_conformacion_jurados').insert([
             {
                 id_tramite: tramiteId,
@@ -1286,7 +1486,6 @@ export async function assignAsesorYCoasesor(
                 orden: 4, // Asesor principal
                 id_etapa: 1,
                 id_usuario_asignador: usuarioAsignadorId,
-                id_coasesor: coasesorId || null,
                 fecha_asignacion: new Date().toISOString(),
                 estado_cj: 1,
             },
@@ -1295,6 +1494,14 @@ export async function assignAsesorYCoasesor(
         if (asesorError) {
             console.error('Error asignando asesor:', asesorError)
             throw new Error('Error al asignar el asesor principal')
+        }
+
+        // 3. Si hay coasesor, manejarlo por separado
+        if (coasesorId) {
+            await assignCoasesorToTramite(tramiteId, coasesorId, usuarioAsignadorId)
+        } else {
+            // Si no hay coasesor, remover cualquier coasesor previo
+            await removeCoasesorFromTramite(tramiteId, usuarioAsignadorId, 'Coasesor no seleccionado en esta asignación')
         }
 
         console.log(`✅ Asesor y ${coasesorId ? 'coasesor' : 'sin coasesor'} asignados exitosamente`)
@@ -1342,6 +1549,40 @@ export async function saveTramiteMetadatos(tramiteId: number, metadatos: Metadat
         return data.id
     } catch (error) {
         console.error('❌ Error en saveTramiteMetadatos:', error)
+        throw error
+    }
+}
+
+/**
+ * Registra la documentación completada en una etapa específica
+ */
+export async function saveTramitesDoc(
+    tramiteId: number, 
+    etapaId: number, 
+    metadatosId: number
+): Promise<void> {
+    try {
+        console.log(`📋 Registrando documentación completada para trámite ${tramiteId} en etapa ${etapaId}`)
+
+        const { error } = await supabase
+            .from('tbl_tramitesdoc')
+            .insert([
+                {
+                    id_tramite: tramiteId,
+                    id_etapa: etapaId,
+                    id_tramites_metadatos: metadatosId,
+                    fecha_registro: new Date().toISOString(),
+                },
+            ])
+
+        if (error) {
+            console.error('Error registrando documentación:', error)
+            throw new Error('Error al registrar la documentación completada')
+        }
+
+        console.log(`✅ Documentación registrada en tbl_tramitesdoc`)
+    } catch (error) {
+        console.error('❌ Error en saveTramitesDoc:', error)
         throw error
     }
 }
@@ -1501,7 +1742,7 @@ export async function finalizarEtapa1ToEtapa2(tramiteId: number, usuarioId: numb
 export async function completarEtapa1(
     tramiteId: number,
     codigoProyecto: string,
-    userUuid: string, // ← CAMBIO: Ahora recibe UUID directamente
+    userUuid: string,
     completarData: CompletarEtapa1Data,
 ): Promise<void> {
     try {
@@ -1511,10 +1752,13 @@ export async function completarEtapa1(
         // 1. Guardar metadatos
         const metadatosId = await saveTramiteMetadatos(tramiteId, completarData.metadatos)
 
-        // 2. Actualizar sublínea en trámite
+        // 🆕 2. Registrar documentación completada en tbl_tramitesdoc
+        await saveTramitesDoc(tramiteId, 1, metadatosId)
+
+        // 3. Actualizar sublínea en trámite
         await updateTramiteSublinea(tramiteId, completarData.sublineaId)
 
-        // 3. Obtener el ID numérico del usuario para las relaciones en BD
+        // 4. Obtener el ID numérico del usuario para las relaciones en BD
         const { data: userData, error: userError } = await supabase
             .from('tbl_usuarios')
             .select('id')
@@ -1527,15 +1771,15 @@ export async function completarEtapa1(
 
         const numericUserId = userData.id
 
-        // 4. Asignar asesor y coasesor
+        // 5. Asignar asesor y coasesor
         await assignAsesorYCoasesor(
             tramiteId,
             completarData.asesorId,
-            numericUserId, // ← Usar ID numérico para relaciones BD
+            numericUserId,
             completarData.coasesorId,
         )
 
-        // 5. Subir archivos
+        // 6. Subir archivos
         for (const archivo of completarData.archivos) {
             await uploadArchivoWithRename(
                 archivo.file,
@@ -1543,12 +1787,12 @@ export async function completarEtapa1(
                 archivo.tipoId,
                 metadatosId,
                 codigoProyecto,
-                userUuid, // ← Usar UUID para storage
+                userUuid,
             )
         }
 
-        // 6. Finalizar etapa
-        await finalizarEtapa1ToEtapa2(tramiteId, numericUserId) // ← Usar ID numérico para logs
+        // 7. Finalizar etapa
+        await finalizarEtapa1ToEtapa2(tramiteId, numericUserId)
 
         console.log(`🎉 Etapa 1 completada exitosamente para trámite ${tramiteId}`)
     } catch (error) {
@@ -1765,11 +2009,12 @@ export async function getTramiteIntegrantes(tramiteId: number): Promise<Integran
 }
 
 /**
- * Obtiene el asesor y coasesor del trámite
+ * Obtiene el asesor y coasesor del trámite (REFACTORIZADO)
  */
 export async function getTramiteAsesor(tramiteId: number): Promise<AsesorInfo | null> {
     try {
-        const { data, error } = await supabase
+        // 1. Obtener asesor principal
+        const { data: asesorData, error: asesorError } = await supabase
             .from('tbl_conformacion_jurados')
             .select(
                 `
@@ -1789,21 +2034,6 @@ export async function getTramiteAsesor(tramiteId: number): Promise<AsesorInfo | 
                         id,
                         nombre
                     )
-                ),
-                coasesor:id_coasesor(
-                    id,
-                    investigador:id_investigador(
-                        id,
-                        orcid,
-                        codigo_renacyt,
-                        nivel_renacyt,
-                        usuario:id_usuario(
-                            id,
-                            nombres,
-                            apellidos,
-                            correo
-                        )
-                    )
                 )
             `,
             )
@@ -1812,47 +2042,55 @@ export async function getTramiteAsesor(tramiteId: number): Promise<AsesorInfo | 
             .eq('estado_cj', 1)
             .single()
 
-        if (error || !data) {
+        if (asesorError || !asesorData) {
             console.log('No se encontró asesor para el trámite')
             return null
         }
 
-        return {
-            id: data.id,
-            orden: data.orden,
-            fecha_asignacion: data.fecha_asignacion,
+        // 2. Obtener coasesor por separado usando la nueva función
+        const coasesorData = await getCoasesorByTramite(tramiteId)
+
+        // 3. Construir respuesta
+        const result: AsesorInfo = {
+            id: asesorData.id,
+            orden: asesorData.orden,
+            fecha_asignacion: asesorData.fecha_asignacion,
             docente: {
-                id: data.docente.id,
-                codigo_airhs: data.docente.codigo_airhs,
+                id: asesorData.docente.id,
+                codigo_airhs: asesorData.docente.codigo_airhs,
                 usuario: {
-                    id: data.docente.usuario.id,
-                    nombres: data.docente.usuario.nombres,
-                    apellidos: data.docente.usuario.apellidos,
-                    correo: data.docente.usuario.correo,
+                    id: asesorData.docente.usuario.id,
+                    nombres: asesorData.docente.usuario.nombres,
+                    apellidos: asesorData.docente.usuario.apellidos,
+                    correo: asesorData.docente.usuario.correo,
                 },
                 especialidad: {
-                    id: data.docente.especialidad.id,
-                    nombre: data.docente.especialidad.nombre,
+                    id: asesorData.docente.especialidad.id,
+                    nombre: asesorData.docente.especialidad.nombre,
                 },
             },
-            coasesor: data.coasesor
-                ? {
-                      id: data.coasesor.id,
-                      investigador: {
-                          id: data.coasesor.investigador.id,
-                          usuario: {
-                              id: data.coasesor.investigador.usuario.id,
-                              nombres: data.coasesor.investigador.usuario.nombres,
-                              apellidos: data.coasesor.investigador.usuario.apellidos,
-                              correo: data.coasesor.investigador.usuario.correo,
-                          },
-                          orcid: data.coasesor.investigador.orcid,
-                          codigo_renacyt: data.coasesor.investigador.codigo_renacyt,
-                          nivel_renacyt: data.coasesor.investigador.nivel_renacyt,
-                      },
-                  }
-                : undefined,
         }
+
+        // 4. Agregar coasesor si existe
+        if (coasesorData) {
+            result.coasesor = {
+                id: coasesorData.id,
+                investigador: {
+                    id: coasesorData.investigador.id,
+                    usuario: {
+                        id: coasesorData.investigador.usuario.id,
+                        nombres: coasesorData.investigador.usuario.nombres,
+                        apellidos: coasesorData.investigador.usuario.apellidos,
+                        correo: coasesorData.investigador.usuario.correo,
+                    },
+                    orcid: coasesorData.investigador.orcid,
+                    codigo_renacyt: coasesorData.investigador.codigo_renacyt,
+                    nivel_renacyt: coasesorData.investigador.nivel_renacyt,
+                },
+            }
+        }
+
+        return result
     } catch (error) {
         console.error('❌ Error en getTramiteAsesor:', error)
         return null
