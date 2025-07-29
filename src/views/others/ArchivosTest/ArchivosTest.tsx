@@ -1,12 +1,12 @@
 import Container from '@/components/shared/Container'
 import ArchivosAccesibles from '@/components/ArchivosAccesibles/ArchivosAccesibles'
-const DocenteService = () => {
+
+const ArchivosTest = () => {
     return (
         <Container className="h-full">
-            <h3 className='text-white'>Panel Docente</h3>
-            
+            <ArchivosAccesibles />
         </Container>
     )
 }
 
-export default DocenteService
+export default ArchivosTest

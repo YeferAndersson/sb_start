@@ -27,6 +27,16 @@ const navigationConfig: NavigationTree[] = [
         authority: [],
         subMenu: [],
     },
+    {
+        key: 'archivosTest',
+        path: '/archivos-test',
+        title: 'Archivos Test',
+        translateKey: 'nav.archivos',
+        icon: 'singleMenu', // Puedes cambiar este icono por uno más adecuado
+        type: NAV_ITEM_TYPE_ITEM,
+        authority: [],
+        subMenu: [],
+    },
 ]
 
 export default navigationConfig

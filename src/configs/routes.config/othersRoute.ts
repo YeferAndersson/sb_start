@@ -14,6 +14,18 @@ const othersRoute: Routes = [
             footer: false,
         },
     },
+
+    {
+        key: 'archivosTest',
+        path: `/archivos-test`,
+        component: lazy(() => import('@/views/others/ArchivosTest')),
+        authority: [ADMIN, USER],
+        meta: {
+            pageBackgroundType: 'plain',
+            pageContainerType: 'contained',
+            footer: false,
+        },
+    },
     
 ]
 
